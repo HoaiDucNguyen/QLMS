@@ -1,4 +1,4 @@
-const BookService = require("../services/book.service");
+const BookService = require("../services/sach.service");
 const MongoDB = require("../utils/mongodb.util");
 const ApiError = require("../api-error");
 
@@ -58,5 +58,15 @@ exports.delete = async (req, res, next) => {
     return res.send({ message: "Book was deleted successfully" });
   } catch (error) {
     return next(new ApiError(500, "An error occurred while deleting the book"));
+  }
+};
+
+exports.findByNameOrAuthor = async (req, res, next) => {
+  try {
+    const bookService = new BookService(MongoDB.client);
+    const books = await bookService.findByNameOrAuthor(req.query.name, req.query.author);
+    return res.send(books);
+  } catch (error) {
+    return next(new ApiError(500, "An error occurred while searching for books"));
   }
 };

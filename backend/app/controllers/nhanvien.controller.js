@@ -60,3 +60,13 @@ exports.delete = async (req, res, next) => {
     return next(new ApiError(500, "An error occurred while deleting the employee"));
   }
 };
+
+exports.findByPosition = async (req, res, next) => {
+  try {
+    const nhanVienService = new NhanVienService(MongoDB.client);
+    const employees = await nhanVienService.findByPosition(req.query.position);
+    return res.send(employees);
+  } catch (error) {
+    return next(new ApiError(500, "An error occurred while searching for employees"));
+  }
+};

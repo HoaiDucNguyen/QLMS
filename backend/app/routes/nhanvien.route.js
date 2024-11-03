@@ -12,4 +12,7 @@ router.route("/:id")
   .put(nhanVienController.update)
   .delete(nhanVienController.delete);
 
+router.route("/search")
+  .get(nhanVienController.findByPosition);
+
 module.exports = router;

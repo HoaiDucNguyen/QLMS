@@ -51,6 +51,14 @@ class NhanVienService {
     });
     return result.value;
   }
+
+  async findByPosition(position) {
+    const filter = {
+      chucVu: { $regex: position, $options: "i" }
+    };
+    const cursor = await this.NhanVien.find(filter);
+    return await cursor.toArray();
+  }
 }
 
 module.exports = NhanVienService;

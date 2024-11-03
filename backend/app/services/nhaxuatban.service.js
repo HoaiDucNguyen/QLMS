@@ -45,6 +45,26 @@ class NhaXuatBanService {
     });
     return result.value;
   }
+
+  async findPublishersWithMoreThan(minBooks) {
+    const pipeline = [
+      {
+        $lookup: {
+          from: "sach",
+          localField: "_id",
+          foreignField: "maNxb",
+          as: "books"
+        }
+      },
+      {
+        $match: {
+          "books.1": { $exists: true }
+        }
+      }
+    ];
+    const cursor = await this.NhaXuatBan.aggregate(pipeline);
+    return await cursor.toArray();
+  }
 }
 
 module.exports = NhaXuatBanService;

@@ -1,8 +1,10 @@
 const express = require("express");
 const cors = require("cors");
-const bookRouter = require("./app/routes/book.route");
-const nxbRouter = require("./app/routes/nxb.route");
+const bookRouter = require("./app/routes/sach.route");
+const nxbRouter = require("./app/routes/nhaxuatban.route");
 const nhanVienRouter = require("./app/routes/nhanvien.route");
+const docGiaRouter = require("./app/routes/docgia.route");
+const theoDoiMuonSachRouter = require("./app/routes/theodoimuonsach.route");
 const ApiError = require("./app/api-error");
 
 const app = express();
@@ -16,9 +18,11 @@ app.get("/", (req, res) => {
   });
 });
 
-app.use("/api/books", bookRouter);
+app.use("/api/sach", bookRouter);
 app.use("/api/nhaxuatban", nxbRouter);
 app.use("/api/nhanvien", nhanVienRouter);
+app.use("/api/docgia", docGiaRouter);
+app.use("/api/theodoimuonsach", theoDoiMuonSachRouter);
 
 app.use((req, res, next) => {
   return next(new ApiError(404, "Resource not found"));

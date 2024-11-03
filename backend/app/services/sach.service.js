@@ -11,7 +11,7 @@ class BookService {
       donGia: payload.donGia,
       soQuyen: payload.soQuyen,
       namXuatBan: payload.namXuatBan,
-      maNxb: payload.maNxb,
+       maNxb: ObjectId.isValid(payload.maNxb) ? new ObjectId(payload.maNxb) : null,
       nguonGoc: payload.nguonGoc,
     };
 
@@ -54,6 +54,21 @@ class BookService {
       _id: ObjectId.isValid(id) ? new ObjectId(id) : null,
     });
     return result.value;
+  }
+
+  async findByNameOrAuthor(name, author) {
+    const filter = {
+      $or: [
+        { tenSach: { $regex: name, $options: "i" } },
+        { nguonGoc: { $regex: author, $options: "i" } }
+      ]
+    };
+    const cursor = await this.Book.find(filter);
+    return await cursor.toArray();
+  }
+
+  async countBooksByPublisher(maNxb) {
+    return await this.Book.countDocuments({ maNxb: ObjectId(maNxb) });
   }
 }
 
