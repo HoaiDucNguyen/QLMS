@@ -6,18 +6,18 @@ exports.create = async (req, res, next) => {
   try {
     const service = new TheoDoiMuonSachService(MongoDB.client);
     const document = await service.create(req.body);
-    return res.send(document);
+    return res.send({
+      message: "Thêm phiếu mượn sách thành công",
+      document: document
+    });
   } catch (error) {
-    if (error.message === "Độc giả không tồn tại") {
+    console.log("Lỗi khi thêm phiếu mượn:", error);
+    if (error.message.includes("không tồn tại") || 
+        error.message.includes("đã hết") || 
+        error.message.includes("đã tồn tại")) {
       return next(new ApiError(400, error.message));
     }
-    if (error.message === "Sách không tồn tại") {
-      return next(new ApiError(400, error.message));
-    }
-    if (error.message === "Sách đã hết") {
-      return next(new ApiError(400, error.message));
-    }
-    return next(new ApiError(500, "Có lỗi khi tạo phiếu mượn sách"));
+    return next(new ApiError(500, "Có lỗi khi thêm phiếu mượn sách"));
   }
 };
 
@@ -47,11 +47,16 @@ exports.findByMaMuon = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const service = new TheoDoiMuonSachService(MongoDB.client);
-    const document = await service.update(req.params.maMuon, req.body);
-    if (!document) {
-      return next(new ApiError(404, "Không tìm thấy phiếu mượn sách"));
-    }
-    return res.send(document);
+    const filter = {
+      maDocGia: req.query.maDocGia,
+      maSach: req.query.maSach,
+      ngayMuon: new Date(req.query.ngayMuon)
+    };
+    const document = await service.update(filter, req.body);
+    return res.send({
+      message: "Cập nhật phiếu mượn sách thành công",
+      document: document
+    });
   } catch (error) {
     return next(new ApiError(500, "Có lỗi khi cập nhật phiếu mượn sách"));
   }
@@ -60,11 +65,16 @@ exports.update = async (req, res, next) => {
 exports.delete = async (req, res, next) => {
   try {
     const service = new TheoDoiMuonSachService(MongoDB.client);
-    const document = await service.delete(req.params.maMuon);
-    if (!document) {
-      return next(new ApiError(404, "Không tìm thấy phiếu mượn sách"));
-    }
-    return res.send({ message: "Đã xóa phiếu mượn sách thành công" });
+    const filter = {
+      maDocGia: req.query.maDocGia,
+      maSach: req.query.maSach,
+      ngayMuon: new Date(req.query.ngayMuon)
+    };
+    const document = await service.delete(filter);
+    return res.send({
+      message: "Xóa phiếu mượn sách thành công",
+      document: document
+    });
   } catch (error) {
     return next(new ApiError(500, "Có lỗi khi xóa phiếu mượn sách"));
   }
@@ -100,5 +110,16 @@ exports.countBorrowingBooks = async (req, res, next) => {
     return res.send({ count });
   } catch (error) {
     return next(new ApiError(500, "Có lỗi khi đếm số sách đang mượn"));
+  }
+};
+
+exports.findBorrow = async (req, res, next) => {
+  try {
+    const service = new TheoDoiMuonSachService(MongoDB.client);
+    const { maDocGia, maSach, ngayMuon } = req.query;
+    const document = await service.findBorrow(maDocGia, maSach, ngayMuon);
+    return res.send(document);
+  } catch (error) {
+    return next(new ApiError(500, "Có lỗi khi tìm phiếu mượn sách"));
   }
 }; 

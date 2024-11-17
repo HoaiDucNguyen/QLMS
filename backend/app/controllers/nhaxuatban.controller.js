@@ -46,7 +46,11 @@ exports.update = async (req, res, next) => {
     if (!document) {
       return next(new ApiError(404, "Không tìm thấy nhà xuất bản"));
     }
-    return res.send(document);
+    return res.send({ 
+      success: true,
+      message: "Cập nhật nhà xuất bản thành công", 
+      document 
+    });
   } catch (error) {
     return next(new ApiError(500, "Có lỗi khi cập nhật nhà xuất bản"));
   }
@@ -59,7 +63,10 @@ exports.delete = async (req, res, next) => {
     if (!document) {
       return next(new ApiError(404, "Không tìm thấy nhà xuất bản"));
     }
-    return res.send({ message: "Đã xóa nhà xuất bản thành công" });
+    return res.send({ 
+      success: true,
+      message: "Xóa nhà xuất bản thành công" 
+    });
   } catch (error) {
     return next(new ApiError(500, "Có lỗi khi xóa nhà xuất bản"));
   }

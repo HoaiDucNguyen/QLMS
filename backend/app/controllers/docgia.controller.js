@@ -6,9 +6,17 @@ exports.create = async (req, res, next) => {
   try {
     const docGiaService = new DocGiaService(MongoDB.client);
     const document = await docGiaService.create(req.body);
-    return res.send(document);
+    return res.send({
+      message: "Thêm độc giả thành công",
+      document: document
+    });
   } catch (error) {
+    console.log("Lỗi khi thêm độc giả:", error);
     if (error.message === "Mã độc giả đã tồn tại") {
+      return next(new ApiError(400, error.message));
+    }
+    if (error.message.includes("không được trống") || 
+        error.message.includes("không hợp lệ")) {
       return next(new ApiError(400, error.message));
     }
     return next(new ApiError(500, "Có lỗi khi thêm độc giả"));
@@ -42,10 +50,10 @@ exports.update = async (req, res, next) => {
   try {
     const docGiaService = new DocGiaService(MongoDB.client);
     const document = await docGiaService.update(req.params.maDocGia, req.body);
-    if (!document) {
-      return next(new ApiError(404, "Không tìm thấy độc giả"));
-    }
-    return res.send(document);
+    return res.send({
+      message: "Cập nhật độc giả thành công",
+      document: document
+    });
   } catch (error) {
     return next(new ApiError(500, "Có lỗi khi cập nhật độc giả"));
   }
@@ -71,5 +79,36 @@ exports.findByName = async (req, res, next) => {
     return res.send(documents);
   } catch (error) {
     return next(new ApiError(500, "Có lỗi khi tìm kiếm độc giả"));
+  }
+};
+
+exports.checkPhoneExists = async (req, res, next) => {
+  try {
+    const docGiaService = new DocGiaService(MongoDB.client);
+    const phone = req.params.phone;
+    const currentMaDocGia = req.query.currentMaDocGia;
+    
+    // Kiểm tra trong bảng độc giả, loại trừ độc giả hiện tại
+    const readerExists = await docGiaService.DocGia.findOne({
+      dienThoai: phone,
+      ...(currentMaDocGia ? { maDocGia: { $ne: currentMaDocGia } } : {})
+    });
+
+    // Kiểm tra trong bảng nhân viên
+    const nhanVienCollection = MongoDB.client.db().collection("nhanvien");
+    const employeeExists = await nhanVienCollection.findOne({
+      soDienThoai: phone
+    });
+
+    const exists = readerExists !== null || employeeExists !== null;
+
+    return res.send({
+      exists: exists,
+      message: exists ? 
+        "Số điện thoại đã được sử dụng" : 
+        "Số điện thoại hợp lệ"
+    });
+  } catch (error) {
+    return next(new ApiError(500, "Lỗi khi kiểm tra số điện thoại"));
   }
 }; 

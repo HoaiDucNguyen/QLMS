@@ -7,21 +7,6 @@ class TheoDoiMuonSachService {
     this.Book = client.db().collection("sach");
   }
 
-  async generateMaMuon() {
-    const lastMuon = await this.TheoDoiMuonSach.findOne(
-      {}, 
-      { sort: { maMuon: -1 } }
-    );
-    
-    if (!lastMuon) {
-      return "MS001"; // Mã đầu tiên
-    }
-
-    const lastNumber = parseInt(lastMuon.maMuon.slice(2));
-    const newNumber = lastNumber + 1;
-    return `MS${newNumber.toString().padStart(3, '0')}`;
-  }
-
   async create(payload) {
     try {
       // Kiểm tra độc giả tồn tại
@@ -39,17 +24,24 @@ class TheoDoiMuonSachService {
         throw new Error("Sách đã hết");
       }
 
-      // Tự động sinh mã mượn
-      const maMuon = await this.generateMaMuon();
-
       const muonSach = {
-        maMuon,
         maDocGia: payload.maDocGia,
         maSach: payload.maSach,
         ngayMuon: new Date(payload.ngayMuon),
         ngayTra: payload.ngayTra ? new Date(payload.ngayTra) : null,
         tinhTrang: payload.tinhTrang || "Đang mượn"
       };
+
+      // Kiểm tra xem đã có phiếu mượn với 3 khóa này chưa
+      const existingBorrow = await this.TheoDoiMuonSach.findOne({
+        maDocGia: muonSach.maDocGia,
+        maSach: muonSach.maSach,
+        ngayMuon: muonSach.ngayMuon
+      });
+
+      if (existingBorrow) {
+        throw new Error("Phiếu mượn này đã tồn tại");
+      }
 
       // Giảm số quyển sách
       await this.Book.updateOne(
@@ -58,53 +50,57 @@ class TheoDoiMuonSachService {
       );
 
       const result = await this.TheoDoiMuonSach.insertOne(muonSach);
-      return result.insertedId;
+      return { ...muonSach, _id: result.insertedId };
     } catch (error) {
+      if (payload.maSach) {
+        await this.Book.updateOne(
+          { maSach: payload.maSach },
+          { $inc: { soQuyen: 1 } }
+        );
+      }
       throw error;
     }
   }
 
-  async find(filter) {
-    const cursor = await this.TheoDoiMuonSach.find(filter);
-    return await cursor.toArray();
+  async findBorrow(maDocGia, maSach, ngayMuon) {
+    return await this.TheoDoiMuonSach.findOne({
+      maDocGia: maDocGia,
+      maSach: maSach,
+      ngayMuon: new Date(ngayMuon)
+    });
   }
 
-  async findByMaMuon(maMuon) {
-    return await this.TheoDoiMuonSach.findOne({ maMuon: maMuon });
-  }
-
-  async update(maMuon, payload) {
-    const filter = { maMuon: maMuon };
+  async update(filter, payload) {
     const update = {
       $set: {
-        maDocGia: payload.maDocGia,
-        maSach: payload.maSach,
-        ngayMuon: new Date(payload.ngayMuon),
         ngayTra: payload.ngayTra ? new Date(payload.ngayTra) : null,
         tinhTrang: payload.tinhTrang
       },
     };
     const result = await this.TheoDoiMuonSach.findOneAndUpdate(
-      filter, 
-      update, 
+      filter,
+      update,
       { returnDocument: "after" }
     );
-    return result.value;
+    return result;
   }
 
-  async delete(maMuon) {
-    // Lấy thông tin mượn sách trước khi xóa
-    const muonSach = await this.findByMaMuon(maMuon);
+  async delete(filter) {
+    const muonSach = await this.TheoDoiMuonSach.findOne(filter);
     if (!muonSach) return null;
 
-    // Tăng số quyển sách khi xóa phiếu mượn
     await this.Book.updateOne(
       { maSach: muonSach.maSach },
       { $inc: { soQuyen: 1 } }
     );
 
-    const result = await this.TheoDoiMuonSach.findOneAndDelete({ maMuon: maMuon });
-    return result.value;
+    const result = await this.TheoDoiMuonSach.findOneAndDelete(filter);
+    return result;
+  }
+
+  async find(filter) {
+    const cursor = await this.TheoDoiMuonSach.find(filter);
+    return await cursor.toArray();
   }
 
   async deleteOverdueRecords(currentDate) {
@@ -114,8 +110,8 @@ class TheoDoiMuonSachService {
     return result.deletedCount;
   }
 
-  async getBorrowDetails(maMuon) {
-    const record = await this.findByMaMuon(maMuon);
+  async getBorrowDetails(filter) {
+    const record = await this.TheoDoiMuonSach.findOne(filter);
     if (!record) return null;
 
     const docGia = await this.DocGia.findOne({ maDocGia: record.maDocGia });

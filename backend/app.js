@@ -9,7 +9,12 @@ const ApiError = require("./app/api-error");
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -29,9 +34,15 @@ app.use((req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
-  res.status(err.statusCode || 500).json({
-    message: err.message || "Internal Server Error"
-  });
+  if (err.name === 'CORSError') {
+    res.status(403).json({
+      message: "CORS không được phép"
+    });
+  } else {
+    res.status(err.statusCode || 500).json({
+      message: err.message || "Internal Server Error"
+    });
+  }
 });
 
 module.exports = app;

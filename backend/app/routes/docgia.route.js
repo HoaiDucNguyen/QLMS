@@ -10,6 +10,8 @@ router.route("/")
 router.route("/search")
   .get(docGiaController.findByName);
 
+router.get("/check-phone/:phone", docGiaController.checkPhoneExists);
+
 router.route("/:maDocGia")
   .get(docGiaController.findByMaDocGia)
   .put(docGiaController.update)
