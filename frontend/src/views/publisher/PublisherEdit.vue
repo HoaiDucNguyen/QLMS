@@ -11,15 +11,18 @@
               </h4>
             </div>
             <div class="card-body">
+              <div v-if="message" :class="['alert', messageType]">
+                {{ message }}
+              </div>
+              
               <div v-if="publisher">
                 <PublisherForm 
                   :publisher="publisher" 
                   @submit:publisher="updatePublisher" 
                   @delete:publisher="deletePublisher" 
                 />
-                <p v-if="message" class="text-danger">{{ message }}</p>
               </div>
-              <div v-else class="text-center py-5">
+              <div v-else-if="!message" class="text-center py-5">
                 <div class="spinner-border text-primary" role="status">
                   <span class="visually-hidden">Đang tải...</span>
                 </div>
@@ -41,49 +44,95 @@ export default {
     PublisherForm,
   },
   props: {
-    id: { type: String, required: true },
+    maNxb: { type: String, required: true },
   },
   data() {
     return {
       publisher: null,
       message: "",
+      messageType: "alert-info"
     };
   },
   methods: {
-    async getPublisher(id) {
+    async getPublisher(maNxb) {
       try {
-        this.publisher = await PublisherService.get(id);
+        const response = await PublisherService.get(maNxb);
+        if (response) {
+          this.publisher = response;
+          this.message = "";
+        } else {
+          this.message = "Không tìm thấy nhà xuất bản";
+          this.messageType = "alert-danger";
+        }
       } catch (error) {
         console.log(error);
-        this.$router.push({ name: "notfound" });
+        this.message = "Có lỗi khi tải thông tin nhà xuất bản";
+        this.messageType = "alert-danger";
       }
     },
     async updatePublisher(data) {
       try {
-        await PublisherService.update(this.publisher.maNxb, data);
-        alert("Nhà xuất bản được cập nhật thành công!");
-        this.$router.push({ name: "publisher.list" });
+        const response = await PublisherService.update(this.publisher.maNxb, data);
+        if (response.success) {
+          this.message = response.message;
+          this.messageType = "alert-success";
+          setTimeout(() => {
+            this.$router.push({ 
+              name: "publisher.list",
+              params: { message: response.message }
+            });
+          }, 1500);
+        }
       } catch (error) {
         console.log(error);
-        alert("Có lỗi xảy ra khi cập nhật nhà xuất bản!");
+        this.message = error.response?.data?.message || "Có lỗi xảy ra khi cập nhật!";
+        this.messageType = "alert-danger";
       }
     },
     async deletePublisher() {
       if (confirm("Bạn muốn xóa Nhà xuất bản này?")) {
         try {
-          await PublisherService.delete(this.publisher.maNxb);
-          alert("Đã xóa nhà xuất bản thành công!");
-          this.$router.push({ name: "publisher.list" });
+          const response = await PublisherService.delete(this.publisher.maNxb);
+          if (response.success) {
+            this.message = response.message;
+            this.messageType = "alert-success";
+            setTimeout(() => {
+              this.$router.push({ 
+                name: "publisher.list",
+                params: { message: response.message }
+              });
+            }, 1500);
+          }
         } catch (error) {
           console.log(error);
-          alert("Có lỗi xảy ra khi xóa nhà xuất bản!");
+          this.message = error.response?.data?.message || "Có lỗi xảy ra khi xóa!";
+          this.messageType = "alert-danger";
         }
       }
     },
   },
-  created() {
-    this.getPublisher(this.id);
-    this.message = "";
+  async created() {
+    await this.getPublisher(this.maNxb);
   },
 };
-</script> 
+</script>
+
+<style scoped>
+.alert {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+</style> 

@@ -19,19 +19,12 @@
           class="form-control" 
           id="diaChi"
           rows="3"
+          required
         ></textarea>
       </div>
 
       <div class="col-12 mt-4">
         <div class="d-flex gap-2 justify-content-end">
-          <button 
-            v-if="publisher?.maNxb" 
-            type="button" 
-            class="btn btn-danger"
-            @click="deletePublisher"
-          >
-            <i class="fas fa-trash"></i> Xóa
-          </button>
           <router-link to="/publishers" class="btn btn-light">
             <i class="fas fa-times"></i> Hủy
           </router-link>

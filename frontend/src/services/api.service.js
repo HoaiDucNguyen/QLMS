@@ -9,7 +9,8 @@ const commonConfig = {
 
 export default (baseURL) => {
   return axios.create({
-    baseURL,
+    baseURL: import.meta.env.VITE_APP_API_URL + baseURL,
     ...commonConfig,
+    withCredentials: true
   });
 };

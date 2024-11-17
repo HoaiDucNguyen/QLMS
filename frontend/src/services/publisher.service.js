@@ -17,15 +17,37 @@ class PublisherService {
   }
 
   async get(maNxb) {
-    return (await this.api.get(`${maNxb}`)).data;
+    try {
+      const response = await this.api.get(`/${maNxb}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error in get:", error);
+      throw error;
+    }
   }
 
   async update(maNxb, data) {
-    return (await this.api.put(`${maNxb}`, data)).data;
+    try {
+      const response = await this.api.put(`/${maNxb}`, data, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error in update:", error);
+      throw error;
+    }
   }
 
   async delete(maNxb) {
-    return (await this.api.delete(`${maNxb}`)).data;
+    try {
+      const response = await this.api.delete(`/${maNxb}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error in delete:", error);
+      throw error;
+    }
   }
 
   async countBooks(maNxb) {

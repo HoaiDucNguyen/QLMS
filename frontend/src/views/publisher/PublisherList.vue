@@ -52,7 +52,7 @@
           </div>
           <div class="card-footer bg-white border-top-0 text-end">
             <router-link 
-              :to="{ name: 'publisher.edit', params: { id: activePublisher.maNxb } }"
+              :to="{ name: 'publisher.edit', params: { maNxb: activePublisher.maNxb } }"
               class="btn btn-warning me-2"
             >
               <i class="fas fa-edit"></i> Hiệu chỉnh

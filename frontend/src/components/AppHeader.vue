@@ -12,6 +12,15 @@
         <router-link class="nav-link" :class="{ active: $route.path.includes('/publishers') }" to="/publishers">
           <i class="fas fa-building"></i> Quản lý NXB
         </router-link>
+        <router-link class="nav-link" :class="{ active: $route.path.includes('/employees') }" to="/employees">
+          <i class="fas fa-users"></i> Quản lý Nhân viên
+        </router-link>
+        <router-link class="nav-link" :class="{ active: $route.path.includes('/readers') }" to="/readers">
+          <i class="fas fa-user"></i> Quản lý Đọc Giả
+        </router-link>
+        <router-link class="nav-link" :class="{ active: $route.path.includes('/borrows') }" to="/borrows">
+          <i class="fas fa-hand-holding-book"></i> Quản lý Mượn Sách
+        </router-link>
       </div>
     </div>
   </nav>
@@ -31,9 +40,25 @@ export default {
     currentPage() {
       const path = this.$route.path;
       if (path.includes('/books/add')) return 'Thêm Sách Mới';
-      if (path.includes('/books/edit')) return 'Chỉnh Sửa Sách';
+      if (path.includes('/books/')) return 'Chỉnh Sửa Sách';
       if (path.includes('/books')) return 'Danh Sách Sách';
+      
+      if (path.includes('/publishers/add')) return 'Thêm Nhà Xuất Bản';
+      if (path.includes('/publishers/')) return 'Chỉnh Sửa Nhà Xuất Bản';
       if (path.includes('/publishers')) return 'Quản Lý Nhà Xuất Bản';
+      
+      if (path.includes('/employees/add')) return 'Thêm Nhân Viên';
+      if (path.includes('/employees/')) return 'Chỉnh Sửa Nhân Viên';
+      if (path.includes('/employees')) return 'Quản Lý Nhân Viên';
+      
+      if (path.includes('/readers/add')) return 'Thêm Đọc Giả';
+      if (path.includes('/readers/')) return 'Chỉnh Sửa Đọc Giả';
+      if (path.includes('/readers')) return 'Quản Lý Đọc Giả';
+
+      if (path.includes('/borrows/add')) return 'Thêm Phiếu Mượn Sách';
+      if (path.includes('/borrows/')) return 'Chỉnh Sửa Phiếu Mượn';
+      if (path.includes('/borrows')) return 'Quản Lý Mượn Sách';
+      
       return 'Trang Chủ';
     }
   }
@@ -74,5 +99,34 @@ export default {
   color: #424242;
   font-size: 1.2rem;
   font-weight: 500;
+}
+
+/* Thêm animation cho menu active */
+.nav-link.active {
+  position: relative;
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 2px;
+  background-color: #fff;
+  border-radius: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .navbar-nav {
+    flex-wrap: wrap;
+  }
+  
+  .nav-link {
+    padding: 0.5rem 0.8rem;
+    margin: 0.2rem;
+  }
 }
 </style>
