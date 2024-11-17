@@ -15,7 +15,7 @@ export default {
     BookForm,
   },
   props: {
-    id: { type: String, required: true },
+    maSach: { type: String, required: true },
   },
   data() {
     return {
@@ -24,23 +24,18 @@ export default {
     };
   },
   methods: {
-    async getBook(id) {
+    async getBook(maSach) {
       try {
-        this.book = await BookService.get(id);
+        this.book = await BookService.get(maSach);
       } catch (error) {
         console.log(error);
-        this.$router.push({
-          name: "notfound",
-          params: { pathMatch: this.$route.path.split("/").slice(1) },
-          query: this.$route.query,
-          hash: this.$route.hash,
-        });
+        this.$router.push({ name: "notfound" });
       }
     },
     async updateBook(data) {
       try {
-        await BookService.update(this.book._id, data);
-        alert("Sách được cập nhật thành công.");
+        await BookService.update(this.book.maSach, data);
+        alert("Sách được cập nhật thành công!");
         this.$router.push({ name: "booklist" });
       } catch (error) {
         console.log(error);
@@ -49,7 +44,8 @@ export default {
     async deleteBook() {
       if (confirm("Bạn muốn xóa Sách này?")) {
         try {
-          await BookService.delete(this.book._id);
+          await BookService.delete(this.book.maSach);
+          alert("Đã xóa sách thành công!");
           this.$router.push({ name: "booklist" });
         } catch (error) {
           console.log(error);
@@ -58,7 +54,7 @@ export default {
     },
   },
   created() {
-    this.getBook(this.id);
+    this.getBook(this.maSach);
     this.message = "";
   },
 };

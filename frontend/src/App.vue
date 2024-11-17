@@ -1,24 +1,28 @@
-<script>
-import AppHeader from "@/components/AppHeader.vue";
-export default {
-  components: {
-    AppHeader,
-  },
-};
-</script>
-
 <template>
   <div id="app">
     <AppHeader />
-    <div class="container mt-3">
-      <router-view />
-    </div>
+    <router-view></router-view>
   </div>
 </template>
 
+<script>
+import AppHeader from './components/AppHeader.vue'
+
+export default {
+  name: 'App',
+  components: {
+    AppHeader
+  }
+};
+</script>
+
 <style>
-.page {
-  max-width: 400px;
-  margin: auto;
+#app {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #2c3e50;
+  min-height: 100vh;
+  background-color: #f8f9fa;
 }
 </style>

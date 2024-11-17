@@ -1,35 +1,46 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import BookList from '../views/book/BookList.vue';
-// Sử dụng BookEdit cho chi tiết và chỉnh sửa
-import BookAdd from '../views/book/BookAdd.vue';
-import NotFound from '../views/NotFound.vue';
 
 const routes = [
   {
     path: '/',
+    redirect: '/books'
+  },
+  {
+    path: '/books',
     name: 'booklist',
-    component: BookList,
+    component: () => import('../views/book/BookList.vue')
   },
   {
     path: '/books/add',
     name: 'book.add',
-    component: BookAdd,
+    component: () => import('../views/book/BookAdd.vue')
   },
   {
-        path: "/books/:id",
-        name: "book.edit",
-        component: () => import("@/views/book/BookEdit.vue"),
-        props: true // Truyền các biến trong $route.params vào làm props
-    },
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'notfound',
-    component: NotFound,
+    path: '/books/:maSach',
+    name: 'book.edit',
+    component: () => import('../views/book/BookEdit.vue'),
+    props: true
   },
+  {
+    path: '/publishers',
+    name: 'publisher.list',
+    component: () => import('../views/publisher/PublisherList.vue')
+  },
+  {
+    path: '/publishers/add',
+    name: 'publisher.add',
+    component: () => import('../views/publisher/PublisherAdd.vue')
+  },
+  {
+    path: '/publishers/:id',
+    name: 'publisher.edit',
+    component: () => import('../views/publisher/PublisherEdit.vue'),
+    props: true
+  }
 ];
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes,
 });
 

@@ -23,11 +23,10 @@ export default {
     async addBook(data) {
       try {
         await BookService.create(data);
-        this.message = "Sách được thêm thành công.";
         this.$router.push({ name: "booklist" });
       } catch (error) {
         console.log(error);
-        this.message = "Có lỗi xảy ra khi thêm sách.";
+        this.message = "Có lỗi xảy ra khi thêm sách";
       }
     },
   },

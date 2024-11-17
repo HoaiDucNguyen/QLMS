@@ -6,31 +6,27 @@ class BookService {
   }
 
   async getAll() {
-    return (await this.api.get("/")).data;
+    return (await this.api.get("")).data;
   }
 
   async create(data) {
-    return (await this.api.post("/", data)).data;
+    return (await this.api.post("", data)).data;
   }
 
-  async deleteAll() {
-    return (await this.api.delete("/")).data;
+  async get(maSach) {
+    return (await this.api.get(`${maSach}`)).data;
   }
 
-  async get(id) {
-    return (await this.api.get(`/${id}`)).data;
+  async update(maSach, data) {
+    return (await this.api.put(`${maSach}`, data)).data;
   }
 
-  async update(id, data) {
-    return (await this.api.put(`/${id}`, data)).data;
+  async delete(maSach) {
+    return (await this.api.delete(`${maSach}`)).data;
   }
 
-  async delete(id) {
-    return (await this.api.delete(`/${id}`)).data;
-  }
-
-  async search(query) {
-    return (await this.api.get(`/search?query=${query}`)).data;
+  async search(name, author) {
+    return (await this.api.get(`search?name=${name}&author=${author}`)).data;
   }
 }
 
