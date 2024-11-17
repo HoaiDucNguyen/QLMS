@@ -9,7 +9,10 @@ exports.create = async (req, res, next) => {
     const document = await nxbService.create(req.body);
     return res.send(document);
   } catch (error) {
-    return next(new ApiError(500, "An error occurred while creating the publisher"));
+    console.log(error);
+    return next(
+      new ApiError(500, "Có lỗi xảy ra khi thêm nhà xuất bản")
+    );
   }
 };
 
@@ -19,46 +22,46 @@ exports.findAll = async (req, res, next) => {
     const documents = await nxbService.find({});
     return res.send(documents);
   } catch (error) {
-    return next(new ApiError(500, "An error occurred while retrieving publishers"));
+    return next(new ApiError(500, "Có lỗi khi lấy danh sách nhà xuất bản"));
   }
 };
 
-exports.findOne = async (req, res, next) => {
+exports.findByMaNxb = async (req, res, next) => {
   try {
     const nxbService = new NhaXuatBanService(MongoDB.client);
-    const document = await nxbService.findById(req.params.id);
+    const document = await nxbService.findByMaNxb(req.params.maNxb);
     if (!document) {
-      return next(new ApiError(404, "Publisher not found"));
+      return next(new ApiError(404, "Không tìm thấy nhà xuất bản"));
     }
     return res.send(document);
   } catch (error) {
-    return next(new ApiError(500, "An error occurred while retrieving the publisher"));
+    return next(new ApiError(500, "Có lỗi khi tìm nhà xuất bản"));
   }
 };
 
 exports.update = async (req, res, next) => {
   try {
     const nxbService = new NhaXuatBanService(MongoDB.client);
-    const document = await nxbService.update(req.params.id, req.body);
+    const document = await nxbService.update(req.params.maNxb, req.body);
     if (!document) {
-      return next(new ApiError(404, "Publisher not found"));
+      return next(new ApiError(404, "Không tìm thấy nhà xuất bản"));
     }
     return res.send(document);
   } catch (error) {
-    return next(new ApiError(500, "An error occurred while updating the publisher"));
+    return next(new ApiError(500, "Có lỗi khi cập nhật nhà xuất bản"));
   }
 };
 
 exports.delete = async (req, res, next) => {
   try {
     const nxbService = new NhaXuatBanService(MongoDB.client);
-    const document = await nxbService.delete(req.params.id);
+    const document = await nxbService.delete(req.params.maNxb);
     if (!document) {
-      return next(new ApiError(404, "Publisher not found"));
+      return next(new ApiError(404, "Không tìm thấy nhà xuất bản"));
     }
-    return res.send({ message: "Publisher was deleted successfully" });
+    return res.send({ message: "Đã xóa nhà xuất bản thành công" });
   } catch (error) {
-    return next(new ApiError(500, "An error occurred while deleting the publisher"));
+    return next(new ApiError(500, "Có lỗi khi xóa nhà xuất bản"));
   }
 };
 
@@ -68,7 +71,7 @@ exports.countBooksByPublisher = async (req, res, next) => {
     const count = await bookService.countBooksByPublisher(req.params.maNxb);
     return res.send({ count });
   } catch (error) {
-    return next(new ApiError(500, "An error occurred while counting books"));
+    return next(new ApiError(500, "Có lỗi khi đếm số sách"));
   }
 };
 
@@ -78,6 +81,6 @@ exports.findPublishersWithMoreThan = async (req, res, next) => {
     const publishers = await nxbService.findPublishersWithMoreThan(req.query.minBooks);
     return res.send(publishers);
   } catch (error) {
-    return next(new ApiError(500, "An error occurred while retrieving publishers"));
+    return next(new ApiError(500, "Có lỗi khi tìm nhà xuất bản"));
   }
 };

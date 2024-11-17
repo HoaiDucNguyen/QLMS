@@ -7,12 +7,12 @@ router.route("/")
   .get(docGiaController.findAll)
   .post(docGiaController.create);
 
-router.route("/:id")
-  .get(docGiaController.findOne)
-  .put(docGiaController.update)
-  .delete(docGiaController.delete);
-
 router.route("/search")
   .get(docGiaController.findByName);
+
+router.route("/:maDocGia")
+  .get(docGiaController.findByMaDocGia)
+  .put(docGiaController.update)
+  .delete(docGiaController.delete);
 
 module.exports = router; 

@@ -7,13 +7,15 @@ router.route("/")
   .get(nxbController.findAll)
   .post(nxbController.create);
 
-router.route("/:id")
-  .get(nxbController.findOne)
-  .put(nxbController.update)
-  .delete(nxbController.delete);
-router.route("/count/:maNxb")
-  .get(nxbController.countBooksByPublisher);
 router.route("/morethan")
   .get(nxbController.findPublishersWithMoreThan);
+
+router.route("/count/:maNxb")
+  .get(nxbController.countBooksByPublisher);
+
+router.route("/:maNxb")
+  .get(nxbController.findByMaNxb)
+  .put(nxbController.update)
+  .delete(nxbController.delete);
 
 module.exports = router;

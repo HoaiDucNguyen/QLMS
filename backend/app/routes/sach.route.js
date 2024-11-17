@@ -10,10 +10,8 @@ router.route("/")
 router.route("/search")
   .get(books.findByNameOrAuthor);
 
-
-
-router.route("/:id")
-  .get(books.findOne)
+router.route("/:maSach")
+  .get(books.findByMaSach)
   .put(books.update)
   .delete(books.delete);
 

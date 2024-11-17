@@ -7,15 +7,18 @@ router.route("/")
   .get(controller.findAll)
   .post(controller.create);
 
-router.route("/:id")
-  .get(controller.findOne)
-  .put(controller.update)
-  .delete(controller.delete);
-
 router.route("/overdue")
   .delete(controller.deleteOverdueRecords);
 
-router.route("/details/:id")
+router.route("/docgia/:maDocGia/count")
+  .get(controller.countBorrowingBooks);
+
+router.route("/:maMuon")
+  .get(controller.findByMaMuon)
+  .put(controller.update)
+  .delete(controller.delete);
+
+router.route("/details/:maMuon")
   .get(controller.getBorrowDetails);
 
 module.exports = router; 
