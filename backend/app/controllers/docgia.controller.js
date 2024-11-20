@@ -111,4 +111,44 @@ exports.checkPhoneExists = async (req, res, next) => {
   } catch (error) {
     return next(new ApiError(500, "Lỗi khi kiểm tra số điện thoại"));
   }
+};
+
+exports.register = async (req, res, next) => {
+  try {
+    const docGiaService = new DocGiaService(MongoDB.client);
+    
+    // Tạo mã đọc giả mới
+    const maDocGia = await docGiaService.generateMaDocGia();
+    
+    // Chuẩn bị dữ liệu đăng ký
+    const data = {
+      ...req.body,
+      maDocGia,
+      vaiTro: 'docgia',
+      trangThai: 'active'
+    };
+
+    // Tạo đọc giả mới
+    const document = await docGiaService.create(data);
+
+    return res.send({
+      message: "Đăng ký thành công",
+      document: {
+        maDocGia: document.maDocGia,
+        hoTen: `${document.hoLot} ${document.ten}`.trim(),
+        dienThoai: document.dienThoai
+      }
+    });
+
+  } catch (error) {
+    console.log("Lỗi khi đăng ký:", error);
+    if (error.message === "Số điện thoại đã được sử dụng") {
+      return next(new ApiError(400, error.message));
+    }
+    if (error.message.includes("không được trống") || 
+        error.message.includes("không hợp lệ")) {
+      return next(new ApiError(400, error.message));
+    }
+    return next(new ApiError(500, "Có lỗi khi đăng ký tài khoản"));
+  }
 }; 

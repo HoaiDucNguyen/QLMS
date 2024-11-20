@@ -1,4 +1,5 @@
 const { ObjectId } = require("mongodb");
+const bcrypt = require('bcryptjs');
 
 class DocGiaService {
   constructor(client) {
@@ -22,7 +23,11 @@ class DocGiaService {
     return `DG${newNumber.toString().padStart(3, '0')}`;
   }
 
-  extractDocGiaData(payload) {
+  async hashPassword(password) {
+    return await bcrypt.hash(password, 10);
+  }
+
+  async extractDocGiaData(payload) {
     const docgia = {
       maDocGia: payload.maDocGia,
       hoLot: payload.hoLot,
@@ -31,8 +36,11 @@ class DocGiaService {
       phai: payload.phai,
       diaChi: payload.diaChi,
       dienThoai: payload.dienThoai,
-      matKhau: payload.matKhau,
     };
+
+    if (payload.matKhau) {
+      docgia.matKhau = await this.hashPassword(payload.matKhau);
+    }
 
     if (!docgia.hoLot?.trim()) {
       throw new Error("Họ lót không được trống");
@@ -40,14 +48,8 @@ class DocGiaService {
     if (!docgia.ten?.trim()) {
       throw new Error("Tên không được trống");
     }
-    if (!docgia.matKhau?.trim()) {
-      throw new Error("Mật khẩu không được trống");
-    }
     if (!docgia.dienThoai?.trim()) {
       throw new Error("Số điện thoại không được trống");
-    }
-    if (!/^\d{10}$/.test(docgia.dienThoai)) {
-      throw new Error("Số điện thoại không hợp lệ");
     }
 
     if (!docgia.ngaySinh) {
@@ -78,19 +80,31 @@ class DocGiaService {
   }
 
   async create(payload) {
-    try {
-      if (!payload.maDocGia) {
-        payload.maDocGia = await this.generateMaDocGia();
-      }
-      const docgia = this.extractDocGiaData(payload);
-      const result = await this.DocGia.insertOne(docgia);
-      return { ...docgia, _id: result.insertedId };
-    } catch (error) {
-      if (error.code === 11000) {
-        throw new Error("Mã độc giả đã tồn tại");
-      }
-      throw error;
+    // Validate dữ liệu
+    const docgia = await this.extractDocGiaData(payload);
+    
+    // Kiểm tra số điện thoại đã tồn tại
+    const existingReader = await this.DocGia.findOne({
+      dienThoai: docgia.dienThoai
+    });
+
+    if (existingReader) {
+      throw new Error("Số điện thoại đã được sử dụng");
     }
+
+    // Tạo mã đọc giả mới nếu chưa có
+    if (!docgia.maDocGia) {
+      docgia.maDocGia = await this.generateMaDocGia();
+    }
+
+    // Thêm vào database
+    const result = await this.DocGia.findOneAndUpdate(
+      { maDocGia: docgia.maDocGia },
+      { $set: docgia },
+      { upsert: true, returnDocument: 'after' }
+    );
+
+    return result;
   }
 
   async find(filter) {
@@ -117,15 +131,18 @@ class DocGiaService {
 
   async update(maDocGia, payload) {
     const filter = { maDocGia: maDocGia };
-    const update = {
-      $set: this.extractDocGiaData(payload),
-    };
+    const update = await this.extractDocGiaData(payload);
+    
+    if (!payload.matKhau?.trim()) {
+      delete update.matKhau;
+    }
+
     const result = await this.DocGia.findOneAndUpdate(
-      filter, 
-      update, 
+      filter,
+      { $set: update },
       { returnDocument: "after" }
     );
-    return result;
+    return result.value;
   }
 
   async delete(maDocGia) {

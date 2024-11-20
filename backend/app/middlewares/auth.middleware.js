@@ -17,3 +17,18 @@ exports.verifyToken = (req, res, next) => {
     return next(new ApiError(401, "Token không hợp lệ hoặc đã hết hạn"));
   }
 };
+
+// Thêm middleware kiểm tra role
+exports.checkRole = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return next(new ApiError(401, "Không tìm thấy thông tin người dùng"));
+    }
+    
+    if (!roles.includes(req.user.role)) {
+      return next(new ApiError(403, "Không có quyền truy cập"));
+    }
+    
+    next();
+  };
+};

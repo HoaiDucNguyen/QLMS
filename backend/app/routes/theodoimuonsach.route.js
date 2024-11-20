@@ -18,4 +18,7 @@ router.route("/overdue")
 router.route("/docgia/:maDocGia/count")
   .get(controller.countBorrowingBooks);
 
+router.route("/reader/:maDocGia")
+  .get(controller.findByReader);
+
 module.exports = router; 

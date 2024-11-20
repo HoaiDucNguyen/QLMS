@@ -17,4 +17,6 @@ router.route("/:maDocGia")
   .put(docGiaController.update)
   .delete(docGiaController.delete);
 
+router.post("/register", docGiaController.register);
+
 module.exports = router; 

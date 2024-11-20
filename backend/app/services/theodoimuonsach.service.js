@@ -84,31 +84,73 @@ class TheoDoiMuonSachService {
   }
 
   async update(filter, payload) {
-    const update = {
-      $set: {
-        ngayTra: payload.ngayTra ? new Date(payload.ngayTra) : null,
-        tinhTrang: payload.tinhTrang
-      },
-    };
-    const result = await this.TheoDoiMuonSach.findOneAndUpdate(
-      filter,
-      update,
-      { returnDocument: "after" }
-    );
-    return result;
+    try {
+      const muonSach = await this.TheoDoiMuonSach.findOne(filter);
+      if (!muonSach) {
+        throw new Error("Không tìm thấy phiếu mượn");
+      }
+
+      // Nếu đang cập nhật trạng thái từ "Đang mượn" sang "Đã trả"
+      if (muonSach.tinhTrang === "Đang mượn" && payload.tinhTrang === "Đã trả") {
+        // Tăng số lượng sách khi trả
+        await this.Book.updateOne(
+          { maSach: muonSach.maSach },
+          { $inc: { soQuyen: 1 } }
+        );
+      }
+      // Ngược lại, nếu đang cập nhật từ "Đã trả" sang "Đang mượn"
+      else if (muonSach.tinhTrang === "Đã trả" && payload.tinhTrang === "Đang mượn") {
+        // Kiểm tra còn sách không
+        const book = await this.Book.findOne({ maSach: muonSach.maSach });
+        if (!book || book.soQuyen <= 0) {
+          throw new Error("Sách đã hết");
+        }
+        // Giảm số lượng sách
+        await this.Book.updateOne(
+          { maSach: muonSach.maSach },
+          { $inc: { soQuyen: -1 } }
+        );
+      }
+
+      const update = {
+        $set: {
+          ngayTra: payload.ngayTra ? new Date(payload.ngayTra) : null,
+          tinhTrang: payload.tinhTrang
+        },
+      };
+
+      const result = await this.TheoDoiMuonSach.findOneAndUpdate(
+        filter,
+        update,
+        { returnDocument: "after" }
+      );
+
+      return result;
+    } catch (error) {
+      console.error("Error in update:", error);
+      throw error;
+    }
   }
 
   async delete(filter) {
-    const muonSach = await this.TheoDoiMuonSach.findOne(filter);
-    if (!muonSach) return null;
+    try {
+      const muonSach = await this.TheoDoiMuonSach.findOne(filter);
+      if (!muonSach) return null;
 
-    await this.Book.updateOne(
-      { maSach: muonSach.maSach },
-      { $inc: { soQuyen: 1 } }
-    );
+      // Chỉ tăng số lượng sách nếu phiếu đang ở trạng thái "Đang mượn"
+      if (muonSach.tinhTrang === "Đang mượn") {
+        await this.Book.updateOne(
+          { maSach: muonSach.maSach },
+          { $inc: { soQuyen: 1 } }
+        );
+      }
 
-    const result = await this.TheoDoiMuonSach.findOneAndDelete(filter);
-    return result;
+      const result = await this.TheoDoiMuonSach.findOneAndDelete(filter);
+      return result;
+    } catch (error) {
+      console.error("Error in delete:", error);
+      throw error;
+    }
   }
 
   async find(filter) {

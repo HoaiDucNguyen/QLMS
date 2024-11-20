@@ -47,27 +47,55 @@ exports.findByMaSach = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const bookService = new BookService(MongoDB.client);
-    const document = await bookService.update(req.params.maSach, req.body);
+    const sachService = new BookService(MongoDB.client);
+    
+    // Validate dữ liệu đầu vào
+    if (!req.body.tenSach?.trim()) {
+      return next(new ApiError(400, "Tên sách không được trống"));
+    }
+
+    const document = await sachService.update(req.params.maSach, req.body);
+    
     if (!document) {
       return next(new ApiError(404, "Không tìm thấy sách"));
     }
-    return res.send({ message: "Cập nhật sách thành công", document });
+    
+    return res.send({ 
+      message: "Cập nhật sách thành công",
+      document: document
+    });
   } catch (error) {
+    console.error("Error in update controller:", error);
+    
+    if (error.message.includes("số sách đang được mượn")) {
+      return next(new ApiError(400, error.message));
+    }
+    if (error.message === "Sách không tồn tại") {
+      return next(new ApiError(404, error.message));
+    }
+    
     return next(new ApiError(500, "Có lỗi khi cập nhật sách"));
   }
 };
 
 exports.delete = async (req, res, next) => {
   try {
-    const bookService = new BookService(MongoDB.client);
-    const document = await bookService.delete(req.params.maSach);
+    const sachService = new BookService(MongoDB.client);
+    const document = await sachService.delete(req.params.maSach);
+    
     if (!document) {
       return next(new ApiError(404, "Không tìm thấy sách"));
     }
-    return res.send({ message: "Đã xóa sách thành công", success: true });
+    
+    return res.send({ message: "Xóa sách thành công" });
   } catch (error) {
-    return next(new ApiError(500, "Có lỗi khi xóa sách"));
+    console.error("Error in delete:", error);
+    if (error.message === "Không thể xóa sách đang được mượn") {
+      return next(new ApiError(400, error.message));
+    }
+    return next(
+      new ApiError(500, `Không thể xóa sách với mã=${req.params.maSach}`)
+    );
   }
 };
 

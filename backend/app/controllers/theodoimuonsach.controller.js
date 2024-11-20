@@ -67,6 +67,13 @@ exports.update = async (req, res, next) => {
       document: document
     });
   } catch (error) {
+    console.error("Error in update:", error);
+    if (error.message === "Sách đã hết") {
+      return next(new ApiError(400, "Sách đã hết"));
+    }
+    if (error.message === "Không tìm thấy phiếu mượn") {
+      return next(new ApiError(404, "Không tìm thấy phiếu mượn"));
+    }
     return next(new ApiError(500, "Có lỗi khi cập nhật phiếu mượn sách"));
   }
 };
@@ -130,5 +137,23 @@ exports.findBorrow = async (req, res, next) => {
     return res.send(document);
   } catch (error) {
     return next(new ApiError(500, "Có lỗi khi tìm phiếu mượn sách"));
+  }
+};
+
+exports.findByReader = async (req, res, next) => {
+  try {
+    const service = new TheoDoiMuonSachService(MongoDB.client);
+    const maDocGia = req.params.maDocGia;
+    
+    // Tìm tất cả phiếu mượn của đọc giả
+    const documents = await service.find({ maDocGia: maDocGia });
+    
+    // Sắp xếp theo ngày mượn mới nhất
+    documents.sort((a, b) => new Date(b.ngayMuon) - new Date(a.ngayMuon));
+    
+    return res.send(documents);
+  } catch (error) {
+    console.error("Error in findByReader:", error);
+    return next(new ApiError(500, "Có lỗi khi lấy danh sách mượn sách của đọc giả"));
   }
 }; 
