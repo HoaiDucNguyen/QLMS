@@ -13,7 +13,19 @@
 
       <div class="col-md-6">
         <label for="ngaySinh" class="form-label">Date of Birth</label>
-        <input v-model="formData.ngaySinh" type="date" class="form-control" id="ngaySinh" required />
+        <input 
+          v-model="formData.ngaySinh" 
+          type="date" 
+          class="form-control" 
+          :class="{ 'is-invalid': dobError }"
+          id="ngaySinh" 
+          :max="maxDate"
+          @input="validateDOB"
+          required 
+        />
+        <div class="invalid-feedback" v-if="dobError">
+          {{ dobError }}
+        </div>
       </div>
 
       <div class="col-md-6">
@@ -83,7 +95,16 @@ export default {
         matKhau: '',
       },
       phoneError: '',
+      dobError: '',
     };
+  },
+  computed: {
+    maxDate() {
+      const today = new Date();
+      const minAge = 5; // Độc giả phải ít nhất 5 tuổi
+      today.setFullYear(today.getFullYear() - minAge);
+      return today.toISOString().split('T')[0];
+    }
   },
   watch: {
     reader: {
@@ -121,9 +142,36 @@ export default {
       }
     },
 
+    validateDOB() {
+      const dob = new Date(this.formData.ngaySinh);
+      const today = new Date();
+      const age = today.getFullYear() - dob.getFullYear();
+      const monthDiff = today.getMonth() - dob.getMonth();
+      
+      if (dob > today) {
+        this.dobError = 'Ngày sinh không thể là ngày trong tương lai';
+        return false;
+      }
+      
+      if (age < 5 || (age === 5 && monthDiff < 0)) {
+        this.dobError = 'Độc giả phải từ 5 tuổi trở lên';
+        return false;
+      }
+      
+      if (age > 100) {
+        this.dobError = 'Ngày sinh không hợp lệ';
+        return false;
+      }
+      
+      this.dobError = '';
+      return true;
+    },
+
     async validateAndSubmit() {
       const isPhoneValid = await this.validatePhone();
-      if (!isPhoneValid) {
+      const isDOBValid = this.validateDOB();
+      
+      if (!isPhoneValid || !isDOBValid) {
         return;
       }
       this.$emit("submit:reader", this.formData);

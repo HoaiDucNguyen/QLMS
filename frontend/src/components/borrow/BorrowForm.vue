@@ -5,8 +5,14 @@
         <label class="form-label">Đọc Giả</label>
         <select v-model="formData.maDocGia" class="form-select" required>
           <option value="">-- Chọn đọc giả --</option>
-          <option v-for="reader in readers" :key="reader.maDocGia" :value="reader.maDocGia">
-            {{ reader.hoTen }} ({{ reader.maDocGia }})
+          <option 
+            v-for="reader in readers" 
+            :key="reader.maDocGia" 
+            :value="reader.maDocGia"
+            :disabled="reader.borrowCount >= 3"
+          >
+            {{ reader.hoTen }} ({{ reader.maDocGia }}) 
+            - Đang mượn: {{ reader.borrowCount || 0 }}/3
           </option>
         </select>
       </div>
@@ -100,8 +106,27 @@ export default {
     async loadReaders() {
       try {
         this.readers = await ReaderService.getAll();
+        // Lấy số sách đang mượn cho mỗi độc giả
+        for (let reader of this.readers) {
+          const response = await BorrowService.countBorrowingBooks(reader.maDocGia);
+          reader.borrowCount = response.count;
+        }
       } catch (error) {
         console.log(error);
+      }
+    },
+    async checkBorrowLimit(maDocGia) {
+      try {
+        const response = await BorrowService.countBorrowingBooks(maDocGia);
+        if (response.count >= 3) {
+          this.errorMessage = "Độc giả đã mượn tối đa 3 cuốn sách. Không thể mượn thêm.";
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error(error);
+        this.errorMessage = "Lỗi khi kiểm tra số lượng sách đang mượn";
+        return false;
       }
     },
     async submitForm() {
@@ -126,7 +151,19 @@ export default {
         return;
       }
 
-      this.$emit("submit:borrow", this.formData);
+      // Kiểm tra số lượng sách đang mượn
+      if (!this.borrow._id) { // Chỉ kiểm tra khi thêm mới
+        const canBorrow = await this.checkBorrowLimit(this.formData.maDocGia);
+        if (!canBorrow) {
+          return;
+        }
+      }
+
+      try {
+        await this.$emit("submit:borrow", this.formData);
+      } catch (error) {
+        this.errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi thêm phiếu mượn";
+      }
     }
   },
   watch: {
@@ -144,6 +181,11 @@ export default {
         }
       },
       immediate: true
+    },
+    'formData.maDocGia': async function(newVal) {
+      if (newVal && !this.borrow._id) {
+        await this.checkBorrowLimit(newVal);
+      }
     }
   },
   created() {

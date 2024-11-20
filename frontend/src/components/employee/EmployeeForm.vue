@@ -50,13 +50,15 @@
       </div>
 
       <div class="col-md-6">
-        <label for="matKhau" class="form-label">Mật Khẩu</label>
+        <label for="matKhau" class="form-label">
+          {{ isEditing ? 'Mật Khẩu Mới (để trống nếu không đổi)' : 'Mật Khẩu' }}
+        </label>
         <input 
           v-model="formData.matKhau" 
           type="password" 
           class="form-control" 
           id="matKhau" 
-          required 
+          :required="!isEditing" 
         />
       </div>
 
@@ -112,6 +114,11 @@ export default {
       },
       immediate: true,
     },
+  },
+  computed: {
+    isEditing() {
+      return !!this.employee?.maNV;
+    }
   },
   methods: {
     async validatePhone() {

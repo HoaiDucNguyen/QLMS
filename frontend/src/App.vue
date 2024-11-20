@@ -1,17 +1,57 @@
 <template>
-  <div id="app">
-    <AppHeader />
-    <router-view></router-view>
+  <div v-if="initialized">
+    <AppHeader v-if="isLoggedIn" />
+    <nav v-if="isLoggedIn" class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="ms-auto">
+        <span class="me-3" v-if="currentUser">{{ getUserFullName }}</span>
+        <button class="btn btn-outline-danger" @click="logout">
+          <i class="fas fa-sign-out-alt"></i> Đăng xuất
+        </button>
+      </div>
+    </nav>
+    <router-view @login-success="checkAuth"/>
   </div>
 </template>
 
 <script>
-import AppHeader from './components/AppHeader.vue'
+import AuthService from "@/services/auth.service";
+import AppHeader from "@/components/AppHeader.vue";
 
 export default {
-  name: 'App',
   components: {
     AppHeader
+  },
+  data() {
+    return {
+      initialized: false
+    }
+  },
+  computed: {
+    isLoggedIn() {
+      return AuthService.isLoggedIn();
+    },
+    currentUser() {
+      const user = AuthService.getUser();
+      console.log("Current user in App.vue:", user);
+      return user;
+    },
+    getUserFullName() {
+      if (!this.currentUser) return '';
+      console.log("Getting user full name:", this.currentUser);
+      return this.currentUser.hoTenNV || '';
+    }
+  },
+  methods: {
+    logout() {
+      AuthService.logout();
+      this.$router.push({ name: 'login' });
+    },
+    checkAuth() {
+      this.initialized = true;
+    }
+  },
+  created() {
+    this.checkAuth();
   }
 };
 </script>

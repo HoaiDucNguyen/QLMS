@@ -36,14 +36,12 @@ export default {
   methods: {
     async createBorrow(data) {
       try {
-        await BorrowService.create(data);
-        this.$router.push({ 
-          name: "borrow.list",
-          params: { message: "Thêm phiếu mượn thành công" }
-        });
+        const result = await BorrowService.create(data);
+        alert(result.message || "Thêm phiếu mượn thành công!");
+        this.$router.push({ name: "borrow.list" });
       } catch (error) {
         console.log(error);
-        this.message = error.response?.data?.message || "Có lỗi xảy ra khi thêm phiếu mượn";
+        alert(error.response?.data?.message || "Có lỗi khi thêm phiếu mượn!");
       }
     },
   },

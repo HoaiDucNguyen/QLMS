@@ -1,24 +1,48 @@
 <template>
   <nav class="navbar navbar-expand navbar-dark">
     <div class="container">
-      <router-link class="navbar-brand" to="/">
+      <router-link class="navbar-brand" :to="{ name: 'booklist' }">
         <i class="fas fa-book-reader"></i> Ứng dụng Quản lý Sách
       </router-link>
       
       <div class="navbar-nav ms-auto">
-        <router-link class="nav-link" :class="{ active: $route.path.includes('/books') }" to="/books">
+        <router-link 
+          class="nav-link" 
+          :class="{ active: $route.path.includes('/books') }" 
+          :to="{ name: 'booklist' }"
+        >
           <i class="fas fa-book"></i> Quản lý Sách
         </router-link>
-        <router-link class="nav-link" :class="{ active: $route.path.includes('/publishers') }" to="/publishers">
+        
+        <router-link 
+          class="nav-link" 
+          :class="{ active: $route.path.includes('/publishers') }" 
+          :to="{ name: 'publisher.list' }"
+        >
           <i class="fas fa-building"></i> Quản lý NXB
         </router-link>
-        <router-link class="nav-link" :class="{ active: $route.path.includes('/employees') }" to="/employees">
+        
+        <router-link 
+          class="nav-link" 
+          :class="{ active: $route.path.includes('/employees') }" 
+          :to="{ name: 'employee.list' }"
+        >
           <i class="fas fa-users"></i> Quản lý Nhân viên
         </router-link>
-        <router-link class="nav-link" :class="{ active: $route.path.includes('/readers') }" to="/readers">
+        
+        <router-link 
+          class="nav-link" 
+          :class="{ active: $route.path.includes('/readers') }" 
+          :to="{ name: 'reader.list' }"
+        >
           <i class="fas fa-user"></i> Quản lý Đọc Giả
         </router-link>
-        <router-link class="nav-link" :class="{ active: $route.path.includes('/borrows') }" to="/borrows">
+        
+        <router-link 
+          class="nav-link" 
+          :class="{ active: $route.path.includes('/borrows') }" 
+          :to="{ name: 'borrow.list' }"
+        >
           <i class="fas fa-hand-holding-book"></i> Quản lý Mượn Sách
         </router-link>
       </div>
