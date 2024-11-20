@@ -37,6 +37,16 @@
         <input type="date" class="form-control" v-model="formData.ngayTra" />
       </div>
 
+      <div class="col-md-6">
+        <label class="form-label">Đơn Giá</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          :value="formatCurrency(bookPrice)" 
+          readonly 
+        />
+      </div>
+
       <div class="col-md-12">
         <label class="form-label">Tình Trạng</label>
         <select v-model="formData.tinhTrang" class="form-select" required>
@@ -88,6 +98,7 @@ export default {
         tinhTrang: "Đang mượn"
       },
       errorMessage: "",
+      bookPrice: 0,
     };
   },
   methods: {
@@ -164,6 +175,24 @@ export default {
       } catch (error) {
         this.errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi thêm phiếu mượn";
       }
+    },
+    formatCurrency(value) {
+      return new Intl.NumberFormat('vi-VN', { 
+        style: 'currency', 
+        currency: 'VND' 
+      }).format(value);
+    },
+    async updateBookPrice() {
+      if (this.formData.maSach) {
+        try {
+          const book = await BookService.get(this.formData.maSach);
+          this.bookPrice = book.donGia;
+        } catch (error) {
+          console.error("Error loading book price:", error);
+        }
+      } else {
+        this.bookPrice = 0;
+      }
     }
   },
   watch: {
@@ -186,6 +215,10 @@ export default {
       if (newVal && !this.borrow._id) {
         await this.checkBorrowLimit(newVal);
       }
+    },
+    'formData.maSach': {
+      handler: 'updateBookPrice',
+      immediate: true
     }
   },
   created() {

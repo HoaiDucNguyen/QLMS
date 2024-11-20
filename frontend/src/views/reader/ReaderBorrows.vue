@@ -37,6 +37,7 @@
                 <th>Ngày Mượn</th>
                 <th>Ngày Hẹn Trả</th>
                 <th>Ngày Trả</th>
+                <th>Đơn Giá</th>
                 <th>Trạng Thái</th>
               </tr>
             </thead>
@@ -46,6 +47,7 @@
                 <td>{{ formatDate(borrow.ngayMuon) }}</td>
                 <td>{{ formatDate(borrow.ngayHenTra) }}</td>
                 <td>{{ formatDate(borrow.ngayTra) || '—' }}</td>
+                <td>{{ formatCurrency(borrow.donGia) }}</td>
                 <td>
                   <span 
                     class="badge"
@@ -136,24 +138,39 @@ export default {
       const today = new Date();
       const henTra = new Date(borrow.ngayHenTra);
       
-      if (borrow.tinhTrang === "Đã trả") {
-        return {
-          text: 'Đã trả',
-          class: 'bg-success'
-        };
+      switch (borrow.tinhTrang) {
+        case "Đang yêu cầu":
+          return {
+            text: 'Đang yêu cầu',
+            class: 'bg-warning text-dark'
+          };
+        case "Đã hủy":
+          return {
+            text: 'Đã hủy',
+            class: 'bg-secondary'
+          };
+        case "Đã trả":
+          return {
+            text: 'Đã trả',
+            class: 'bg-success'
+          };
+        case "Đang mượn":
+          return today > henTra 
+            ? { text: 'Quá hạn', class: 'bg-danger' }
+            : { text: 'Đang mượn', class: 'bg-primary' };
+        default:
+          return {
+            text: borrow.tinhTrang,
+            class: 'bg-primary'
+          };
       }
-      
-      if (today > henTra) {
-        return {
-          text: 'Quá hạn',
-          class: 'bg-danger'
-        };
-      }
-      
-      return {
-        text: borrow.tinhTrang || 'Đang mượn',
-        class: 'bg-primary'
-      };
+    },
+
+    formatCurrency(value) {
+      return new Intl.NumberFormat('vi-VN', { 
+        style: 'currency', 
+        currency: 'VND' 
+      }).format(value || 0);
     }
   },
   created() {
@@ -198,5 +215,13 @@ export default {
 
 .badge.bg-primary {
   background-color: #0d6efd !important;
+}
+
+.badge.bg-warning {
+  background-color: #ffc107 !important;
+}
+
+.badge.bg-secondary {
+  background-color: #6c757d !important;
 }
 </style> 

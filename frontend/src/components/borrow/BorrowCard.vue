@@ -26,6 +26,10 @@
             {{ borrow.tinhTrang }}
           </span>
         </div>
+        <div class="mb-3">
+          <label class="fw-bold">Đơn Giá:</label>
+          <p>{{ formatCurrency(borrow.donGia) }}</p>
+        </div>
       </div>
     </div>
 
@@ -80,6 +84,12 @@ export default {
         'badge bg-success': status === 'Đã trả',
         'badge bg-danger': status === 'Quá hạn'
       };
+    },
+    formatCurrency(value) {
+      return new Intl.NumberFormat('vi-VN', { 
+        style: 'currency', 
+        currency: 'VND' 
+      }).format(value || 0);
     },
     async confirmDelete() {
       if (confirm(`Bạn có chắc muốn xóa phiếu mượn này?`)) {

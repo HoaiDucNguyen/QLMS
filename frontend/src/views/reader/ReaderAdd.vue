@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <h4>Thêm Đọc Giả</h4>
-    <ReaderForm @submit:reader="addReader" />
+    <ReaderForm @submit:reader="addReader" :reader="{}" />
   </div>
 </template>
 
@@ -16,6 +16,11 @@ export default {
   methods: {
     async addReader(data) {
       try {
+        if (!data.matKhau) {
+          alert("Vui lòng nhập mật khẩu cho đọc giả!");
+          return;
+        }
+
         const result = await ReaderService.create(data);
         alert(result.message || "Thêm độc giả thành công!");
         this.$router.push({ name: "reader.list" });

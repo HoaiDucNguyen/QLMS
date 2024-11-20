@@ -1,4 +1,5 @@
 import createApiClient from "./api.service";
+import BookService from "@/services/book.service";
 
 class BorrowService {
   constructor(baseUrl = "/api/theodoimuonsach") {
@@ -10,7 +11,15 @@ class BorrowService {
   }
 
   async create(data) {
-    return (await this.api.post("", data)).data;
+    try {
+      const book = await BookService.get(data.maSach);
+      data.donGia = book.donGia;
+      
+      return (await this.api.post("", data)).data;
+    } catch (error) {
+      console.error("Error in create borrow:", error);
+      throw error;
+    }
   }
 
   async update(filter, data) {

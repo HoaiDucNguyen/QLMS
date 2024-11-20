@@ -138,22 +138,18 @@ export default {
           return;
         }
 
-        if (book.soQuyen <= 0) {
-          alert('Rất tiếc, sách này hiện đã hết.');
-          return;
-        }
-
-        // Tạo phiếu mượn mới
+        // Tạo phiếu mượn mới với trạng thái "Đang yêu cầu"
         const borrowData = {
           maDocGia: user.maDocGia,
           maSach: book.maSach,
           ngayMuon: new Date().toISOString().split('T')[0],
           ngayHenTra: this.calculateReturnDate(),
-          tinhTrang: "Đang mượn"
+          tinhTrang: "Đang yêu cầu",
+          ghiChu: ""
         };
 
         const result = await BorrowService.create(borrowData);
-        alert(result.message || 'Yêu cầu mượn sách thành công!');
+        alert('Đã gửi yêu cầu mượn sách. Vui lòng đợi thủ thư duyệt yêu cầu.');
         
         // Refresh lại danh sách sách
         this.refreshList();
@@ -163,7 +159,19 @@ export default {
 
       } catch (error) {
         console.error('Error requesting borrow:', error);
-        alert(error.response?.data?.message || 'Có lỗi xảy ra khi yêu cầu mượn sách!');
+        
+        // Xử lý các trường hợp lỗi cụ thể
+        let errorMessage = 'Có lỗi xảy ra khi yêu cầu mượn sách!';
+        
+        if (error.response?.data?.message) {
+          if (error.response.data.message.includes('đang mượn hoặc yêu cầu mượn cuốn sách này')) {
+            errorMessage = 'Bạn đang mượn hoặc đã yêu cầu mượn cuốn sách này!';
+          } else if (error.response.data.message.includes('tối đa 3 cuốn sách')) {
+            errorMessage = 'Bạn đã mượn tối đa 3 cuốn sách!';
+          }
+        }
+
+        alert(errorMessage);
       }
     },
 

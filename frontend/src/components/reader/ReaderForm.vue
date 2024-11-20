@@ -52,14 +52,14 @@
         </div>
       </div>
 
-      <div class="col-md-6" v-if="!hidePassword">
+      <div class="col-md-6">
         <label for="matKhau" class="form-label">Mật khẩu</label>
         <input 
           v-model="formData.matKhau" 
           type="password" 
           class="form-control" 
           id="matKhau" 
-          required 
+          :required="!reader.maDocGia" 
         />
       </div>
 
@@ -100,6 +100,8 @@ export default {
         diaChi: '',
         dienThoai: '',
         matKhau: '',
+        vaiTro: 'docgia',
+        trangThai: 'active'
       },
       phoneError: '',
       dobError: '',

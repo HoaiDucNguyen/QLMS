@@ -47,6 +47,7 @@
                     <th>Ngày Mượn</th>
                     <th>Ngày Trả</th>
                     <th>Tình Trạng</th>
+                    <th>Đơn Giá</th>
                     <th>Thao Tác</th>
                   </tr>
                 </thead>
@@ -63,6 +64,7 @@
                         {{ borrow.tinhTrang }}
                       </span>
                     </td>
+                    <td>{{ formatCurrency(borrow.donGia) }}</td>
                     <td>
                       <router-link
                         :to="{
@@ -80,6 +82,8 @@
                       <button 
                         class="btn btn-sm btn-danger"
                         @click="deleteBorrow(borrow)"
+                        :disabled="borrow.tinhTrang === 'Đang mượn'"
+                        :title="borrow.tinhTrang === 'Đang mượn' ? 'Không thể xóa phiếu đang mượn' : 'Xóa phiếu mượn'"
                       >
                         <i class="fas fa-trash"></i>
                       </button>
@@ -162,20 +166,34 @@ export default {
       }
     },
     async deleteBorrow(borrow) {
-      if (confirm(`Bạn có chắc muốn xóa phiếu mượn này không?`)) {
-        try {
-          const filter = {
-            maDocGia: borrow.maDocGia,
-            maSach: borrow.maSach,
-            ngayMuon: borrow.ngayMuon
-          };
-          const result = await BorrowService.delete(filter);
-          this.message = result.message;
-          this.refreshList();
-        } catch (error) {
-          console.log(error);
-          alert(error.response?.data?.message || "Có lỗi xảy ra khi xóa phiếu mượn!");
+      try {
+        if (borrow.tinhTrang === "Đang mượn") {
+          alert("Không thể xóa phiếu mượn đang trong trạng thái mượn");
+          return;
         }
+
+        const confirmed = confirm("Bạn có chắc chắn muốn xóa phiếu mượn này?");
+        if (!confirmed) return;
+
+        await BorrowService.delete({
+          maDocGia: borrow.maDocGia,
+          maSach: borrow.maSach,
+          ngayMuon: borrow.ngayMuon
+        });
+
+        // Refresh danh sách sau khi xóa
+        this.loadBorrows();
+        alert("Xóa phiếu mượn thành công");
+
+      } catch (error) {
+        console.error("Error deleting borrow:", error);
+        let errorMessage = "Có lỗi xảy ra khi xóa phiếu mượn";
+        
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+        
+        alert(errorMessage);
       }
     },
     async loadReaderInfo(maDocGia) {
@@ -207,6 +225,12 @@ export default {
     },
     getBookName(maSach) {
       return this.books[maSach]?.tenSach || 'Đang tải...';
+    },
+    formatCurrency(value) {
+      return new Intl.NumberFormat('vi-VN', { 
+        style: 'currency', 
+        currency: 'VND' 
+      }).format(value || 0);
     }
   },
   created() {
@@ -237,5 +261,30 @@ export default {
 
 .table th {
   background-color: #f8f9fa;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Thêm tooltip cho nút bị disabled */
+[title] {
+  position: relative;
+}
+
+[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
 }
 </style> 
