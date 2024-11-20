@@ -5,7 +5,9 @@ const ApiError = require("../api-error");
 exports.create = async (req, res, next) => {
   try {
     const service = new TheoDoiMuonSachService(MongoDB.client);
+    console.log("Creating borrow with payload:", req.body);
     const document = await service.create(req.body);
+    console.log("Created borrow document:", document);
     return res.send({
       message: req.body.tinhTrang === "Đang yêu cầu" 
         ? "Gửi yêu cầu mượn sách thành công"
@@ -13,7 +15,7 @@ exports.create = async (req, res, next) => {
       document: document
     });
   } catch (error) {
-    console.error("Internal error:", error);
+    console.error("Error in create controller:", error);
     
     if (error.message.includes("đang mượn hoặc yêu cầu mượn cuốn sách này")) {
       return next(new ApiError(400, "Độc giả đang mượn hoặc yêu cầu mượn cuốn sách này"));

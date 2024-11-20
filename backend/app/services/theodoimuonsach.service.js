@@ -25,7 +25,7 @@ class TheoDoiMuonSachService {
         throw new Error("Độc giả đã có tổng cộng 3 đơn mượn hoặc yêu cầu mượn");
       }
 
-      // Kiểm tra sách tồn tại
+      // Kiểm tra sách tồn tại và số lượng
       const sach = await this.Book.findOne({ maSach: payload.maSach });
       if (!sach) {
         throw new Error("Sách không tồn tại");
@@ -42,12 +42,30 @@ class TheoDoiMuonSachService {
         throw new Error("Độc giả đang mượn hoặc yêu cầu mượn cuốn sách này");
       }
 
+      // Kiểm tra và cập nhật số lượng sách khi trạng thái là "Đang mượn"
+      if (payload.tinhTrang === "Đang mượn") {
+        if (sach.soQuyen <= 0) {
+          throw new Error("Sách đã hết");
+        }
+
+        // Giảm số lượng sách
+        const updateResult = await this.Book.findOneAndUpdate(
+          { maSach: payload.maSach, soQuyen: { $gt: 0 } },
+          { $inc: { soQuyen: -1 } },
+          { returnDocument: "after" }
+        );
+
+        if (!updateResult) {
+          throw new Error("Không thể giảm số lượng sách");
+        }
+      }
+
       const muonSach = {
         maDocGia: payload.maDocGia,
         maSach: payload.maSach,
         ngayMuon: new Date(payload.ngayMuon),
         ngayHenTra: payload.ngayHenTra ? new Date(payload.ngayHenTra) : null,
-        tinhTrang: payload.tinhTrang || "Đang yêu cầu",
+        tinhTrang: payload.tinhTrang,
         donGia: sach.donGia,
         ghiChu: payload.ghiChu || ""
       };
@@ -77,25 +95,16 @@ class TheoDoiMuonSachService {
 
       // Xử lý các trường hợp chuyển trạng thái
       if (muonSach.tinhTrang !== payload.tinhTrang) {
+        const sach = await this.Book.findOne({ maSach: muonSach.maSach });
+        if (!sach) {
+          throw new Error("Sách không tồn tại");
+        }
+
         // Từ "Đang yêu cầu" sang "Đang mượn"
         if (muonSach.tinhTrang === "Đang yêu cầu" && payload.tinhTrang === "Đang mượn") {
-          // Kiểm tra số lượng sách đang mượn
-          const borrowingCount = await this.TheoDoiMuonSach.countDocuments({
-            maDocGia: muonSach.maDocGia,
-            tinhTrang: "Đang mượn"
-          });
-
-          if (borrowingCount >= 3) {
-            throw new Error("Độc giả đã mượn tối đa 3 cuốn sách");
-          }
-
-          // Kiểm tra số lượng sách còn
-          const book = await this.Book.findOne({ maSach: muonSach.maSach });
-          if (!book || book.soQuyen <= 0) {
+          if (sach.soQuyen <= 0) {
             throw new Error("Sách đã hết");
           }
-
-          // Giảm số lượng sách
           await this.Book.updateOne(
             { maSach: muonSach.maSach },
             { $inc: { soQuyen: -1 } }
@@ -103,7 +112,6 @@ class TheoDoiMuonSachService {
         }
         // Từ "Đang mượn" sang "Đã trả"
         else if (muonSach.tinhTrang === "Đang mượn" && payload.tinhTrang === "Đã trả") {
-          // Tăng số lượng sách khi trả
           await this.Book.updateOne(
             { maSach: muonSach.maSach },
             { $inc: { soQuyen: 1 } }
@@ -113,11 +121,10 @@ class TheoDoiMuonSachService {
 
       const update = {
         $set: {
-          ngayTra: payload.ngayTra ? new Date(payload.ngayTra) : null,
+          ngayHenTra: payload.ngayHenTra ? new Date(payload.ngayHenTra) : null,
           tinhTrang: payload.tinhTrang,
-          donGia: muonSach.donGia,
           ghiChu: payload.ghiChu || muonSach.ghiChu
-        },
+        }
       };
 
       const result = await this.TheoDoiMuonSach.findOneAndUpdate(
