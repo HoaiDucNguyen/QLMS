@@ -7,14 +7,16 @@ exports.create = async (req, res, next) => {
     const service = new TheoDoiMuonSachService(MongoDB.client);
     const document = await service.create(req.body);
     return res.send({
-      message: "Thêm phiếu mượn sách thành công",
+      message: req.body.tinhTrang === "Đang yêu cầu" 
+        ? "Gửi yêu cầu mượn sách thành công"
+        : "Thêm phiếu mượn sách thành công",
       document: document
     });
   } catch (error) {
     console.error("Internal error:", error);
     
-    if (error.message.includes("đang mượn cuốn sách này")) {
-      return next(new ApiError(400, "Độc giả đang mượn cuốn sách này"));
+    if (error.message.includes("đang mượn hoặc yêu cầu mượn cuốn sách này")) {
+      return next(new ApiError(400, "Độc giả đang mượn hoặc yêu cầu mượn cuốn sách này"));
     }
     if (error.message.includes("tối đa 3 cuốn sách")) {
       return next(new ApiError(400, "Độc giả đã mượn tối đa 3 cuốn sách"));
@@ -24,6 +26,9 @@ exports.create = async (req, res, next) => {
     }
     if (error.message.includes("đã hết")) {
       return next(new ApiError(400, "Sách đã hết"));
+    }
+    if (error.message.includes("đơn giá không hợp lệ")) {
+      return next(new ApiError(400, "Đơn giá không hợp lệ"));
     }
     
     return next(new ApiError(500, "Có lỗi xảy ra khi thêm phiếu mượn sách"));
@@ -61,9 +66,20 @@ exports.update = async (req, res, next) => {
       maSach: req.query.maSach,
       ngayMuon: new Date(req.query.ngayMuon)
     };
+    
+    delete req.body.donGia;
+    
     const document = await service.update(filter, req.body);
+    
+    let message = "Cập nhật phiếu mượn sách thành công";
+    if (req.body.tinhTrang === "Đã hủy") {
+      message = "Đã hủy yêu cầu mượn sách";
+    } else if (req.body.tinhTrang === "Đang mượn") {
+      message = "Đã duyệt yêu cầu mượn sách";
+    }
+
     return res.send({
-      message: "Cập nhật phiếu mượn sách thành công",
+      message: message,
       document: document
     });
   } catch (error) {
@@ -86,12 +102,20 @@ exports.delete = async (req, res, next) => {
       maSach: req.query.maSach,
       ngayMuon: new Date(req.query.ngayMuon)
     };
+    
     const document = await service.delete(filter);
+    if (!document) {
+      return next(new ApiError(404, "Không tìm thấy phiếu mượn sách"));
+    }
     return res.send({
       message: "Xóa phiếu mượn sách thành công",
       document: document
     });
   } catch (error) {
+    console.error("Delete error:", error);
+    if (error.message.includes("trạng thái mượn")) {
+      return next(new ApiError(400, "Không thể xóa phiếu mượn đang trong trạng thái mượn"));
+    }
     return next(new ApiError(500, "Có lỗi khi xóa phiếu mượn sách"));
   }
 };
