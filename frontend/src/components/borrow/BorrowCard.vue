@@ -17,8 +17,8 @@
           <p>{{ formatDate(borrow.ngayMuon) }}</p>
         </div>
         <div class="mb-3">
-          <label class="fw-bold">Ngày Trả:</label>
-          <p>{{ formatDate(borrow.ngayTra) || 'Chưa trả' }}</p>
+          <label class="fw-bold">Ngày Hẹn Trả:</label>
+          <p>{{ formatDate(borrow.ngayHenTra) || 'Chưa xác định' }}</p>
         </div>
         <div class="mb-3">
           <label class="fw-bold">Tình Trạng:</label>

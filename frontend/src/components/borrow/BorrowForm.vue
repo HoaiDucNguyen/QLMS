@@ -33,8 +33,13 @@
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Ngày Trả (dự kiến)</label>
-        <input type="date" class="form-control" v-model="formData.ngayTra" />
+        <label class="form-label">Ngày Hẹn Trả</label>
+        <input 
+          type="date" 
+          class="form-control" 
+          v-model="formData.ngayHenTra" 
+          required
+        />
       </div>
 
       <div class="col-md-6">
@@ -51,6 +56,7 @@
         <label class="form-label">Tình Trạng</label>
         <select v-model="formData.tinhTrang" class="form-select" required>
           <option value="Đang mượn">Đang mượn</option>
+          <option value="Đang yêu cầu">Đang yêu cầu</option>
           <option value="Đã trả">Đã trả</option>
           <option value="Quá hạn">Quá hạn</option>
         </select>
@@ -94,8 +100,9 @@ export default {
         maDocGia: "",
         maSach: "",
         ngayMuon: new Date().toISOString().split('T')[0],
-        ngayTra: "",
-        tinhTrang: "Đang mượn"
+        ngayHenTra: "",
+        tinhTrang: "Đang mượn",
+        donGia: 0
       },
       errorMessage: "",
       bookPrice: 0,
@@ -157,8 +164,8 @@ export default {
       }
 
       // Kiểm tra ngày trả phải sau ngày mượn
-      if (this.formData.ngayTra && new Date(this.formData.ngayTra) < new Date(this.formData.ngayMuon)) {
-        this.errorMessage = "Ngày trả phải sau ngày mượn";
+      if (this.formData.ngayHenTra && new Date(this.formData.ngayHenTra) < new Date(this.formData.ngayMuon)) {
+        this.errorMessage = "Ngày hẹn trả phải sau ngày mượn";
         return;
       }
 
@@ -204,8 +211,9 @@ export default {
             maDocGia: newVal.maDocGia,
             maSach: newVal.maSach,
             ngayMuon: this.formatDateForInput(newVal.ngayMuon),
-            ngayTra: this.formatDateForInput(newVal.ngayTra),
-            tinhTrang: newVal.tinhTrang
+            ngayHenTra: this.formatDateForInput(newVal.ngayHenTra),
+            tinhTrang: newVal.tinhTrang,
+            donGia: newVal.donGia
           };
         }
       },

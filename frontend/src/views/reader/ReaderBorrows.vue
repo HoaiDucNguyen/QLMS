@@ -36,18 +36,16 @@
                 <th>Tên Sách</th>
                 <th>Ngày Mượn</th>
                 <th>Ngày Hẹn Trả</th>
-                <th>Ngày Trả</th>
+                <th>Tình Trạng</th>
                 <th>Đơn Giá</th>
-                <th>Trạng Thái</th>
+                <th>Thao Tác</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="borrow in borrows" :key="borrow._id">
                 <td>{{ getBookName(borrow.maSach) }}</td>
                 <td>{{ formatDate(borrow.ngayMuon) }}</td>
-                <td>{{ formatDate(borrow.ngayHenTra) }}</td>
-                <td>{{ formatDate(borrow.ngayTra) || '—' }}</td>
-                <td>{{ formatCurrency(borrow.donGia) }}</td>
+                <td>{{ formatDate(borrow.ngayHenTra) || '—' }}</td>
                 <td>
                   <span 
                     class="badge"
@@ -55,6 +53,16 @@
                   >
                     {{ getBorrowStatus(borrow).text }}
                   </span>
+                </td>
+                <td>{{ formatCurrency(borrow.donGia) }}</td>
+                <td>
+                  <button
+                    v-if="borrow.tinhTrang === 'Đang yêu cầu'"
+                    class="btn btn-sm btn-danger"
+                    @click="cancelBorrow(borrow)"
+                  >
+                    <i class="fas fa-times"></i> Hủy đơn
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -171,7 +179,37 @@ export default {
         style: 'currency', 
         currency: 'VND' 
       }).format(value || 0);
-    }
+    },
+
+    async cancelBorrow(borrow) {
+      try {
+        if (!confirm('Bạn có chắc chắn muốn hủy đơn mượn sách này?')) {
+          return;
+        }
+
+        const filter = {
+          maDocGia: borrow.maDocGia,
+          maSach: borrow.maSach,
+          ngayMuon: borrow.ngayMuon
+        };
+
+        const updateData = {
+          ...borrow,
+          tinhTrang: "Đã hủy"
+        };
+
+        await BorrowService.update(filter, updateData);
+        await this.loadBorrows(); // Tải lại danh sách sau khi hủy
+        
+        // Hiển thị thông báo thành công
+        this.$toast?.success('Hủy đơn mượn sách thành công') || 
+        alert('Hủy đơn mượn sách thành công');
+      } catch (error) {
+        console.error('Error canceling borrow:', error);
+        this.$toast?.error(error.response?.data?.message || 'Có lỗi khi hủy đơn mượn sách') || 
+        alert(error.response?.data?.message || 'Có lỗi khi hủy đơn mượn sách');
+      }
+    },
   },
   created() {
     this.loadBorrows();
@@ -223,5 +261,20 @@ export default {
 
 .badge.bg-secondary {
   background-color: #6c757d !important;
+}
+
+.btn-danger {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.btn-danger i {
+  margin-right: 0.25rem;
+}
+
+.table td:last-child {
+  padding: 0.5rem;
+  text-align: center;
+  white-space: nowrap;
 }
 </style> 

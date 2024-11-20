@@ -45,7 +45,7 @@
                     <th>Mã Sách</th>
                     <th>Tên Sách</th>
                     <th>Ngày Mượn</th>
-                    <th>Ngày Trả</th>
+                    <th>Ngày Hẹn Trả</th>
                     <th>Tình Trạng</th>
                     <th>Đơn Giá</th>
                     <th>Thao Tác</th>
@@ -58,7 +58,7 @@
                     <td>{{ borrow.maSach }}</td>
                     <td>{{ getBookName(borrow.maSach) }}</td>
                     <td>{{ formatDate(borrow.ngayMuon) }}</td>
-                    <td>{{ formatDate(borrow.ngayTra) }}</td>
+                    <td>{{ formatDate(borrow.ngayHenTra) }}</td>
                     <td>
                       <span :class="getStatusClass(borrow.tinhTrang)">
                         {{ borrow.tinhTrang }}
@@ -181,9 +181,8 @@ export default {
           ngayMuon: borrow.ngayMuon
         });
 
-        // Refresh danh sách sau khi xóa
-        this.loadBorrows();
-        alert("Xóa phiếu mượn thành công");
+        await this.refreshList();
+        this.message = "Xóa phiếu mượn thành công";
 
       } catch (error) {
         console.error("Error deleting borrow:", error);
