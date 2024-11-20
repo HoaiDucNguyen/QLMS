@@ -52,9 +52,15 @@
         </div>
       </div>
 
-      <div class="col-md-6">
-        <label for="matKhau" class="form-label">Password</label>
-        <input v-model="formData.matKhau" type="password" class="form-control" id="matKhau" required />
+      <div class="col-md-6" v-if="!hidePassword">
+        <label for="matKhau" class="form-label">Mật khẩu</label>
+        <input 
+          v-model="formData.matKhau" 
+          type="password" 
+          class="form-control" 
+          id="matKhau" 
+          required 
+        />
       </div>
 
       <div class="col-md-12">
@@ -82,6 +88,7 @@ import ReaderService from "@/services/reader.service";
 export default {
   props: {
     reader: { type: Object, default: () => ({}) },
+    hidePassword: { type: Boolean, default: true }
   },
   data() {
     return {

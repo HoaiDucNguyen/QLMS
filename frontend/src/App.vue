@@ -1,57 +1,69 @@
 <template>
   <div v-if="initialized">
-    <AppHeader v-if="isLoggedIn" />
+    <AppHeader v-if="isLoggedIn && isNhanVien" />
+    <ReaderAppHeader v-if="isLoggedIn && isDocGia" />
     <nav v-if="isLoggedIn" class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="ms-auto">
-        <span class="me-3" v-if="currentUser">{{ getUserFullName }}</span>
-        <button class="btn btn-outline-danger" @click="logout">
+        <span class="me-3" v-if="currentUser">
+          {{ isNhanVien ? currentUser.hoTenNV : `${currentUser.hoLot} ${currentUser.ten}` }}
+        </span>
+        <button class="btn btn-outline-danger" @click="handleLogout">
           <i class="fas fa-sign-out-alt"></i> Đăng xuất
         </button>
       </div>
     </nav>
-    <router-view @login-success="checkAuth"/>
+    <router-view @login-success="handleLoginSuccess"/>
   </div>
 </template>
 
 <script>
 import AuthService from "@/services/auth.service";
 import AppHeader from "@/components/AppHeader.vue";
+import ReaderAppHeader from "@/components/reader/ReaderAppHeader.vue";
 
 export default {
   components: {
-    AppHeader
+    AppHeader,
+    ReaderAppHeader
   },
   data() {
     return {
-      initialized: false
+      initialized: false,
+      isLoggedIn: false,
+      currentUser: null
     }
   },
   computed: {
-    isLoggedIn() {
-      return AuthService.isLoggedIn();
+    isNhanVien() {
+      return AuthService.isNhanVien();
     },
-    currentUser() {
-      const user = AuthService.getUser();
-      console.log("Current user in App.vue:", user);
-      return user;
-    },
-    getUserFullName() {
-      if (!this.currentUser) return '';
-      console.log("Getting user full name:", this.currentUser);
-      return this.currentUser.hoTenNV || '';
+    isDocGia() {
+      return AuthService.isDocGia();
     }
   },
   methods: {
-    logout() {
+    handleLogout() {
       AuthService.logout();
+      this.isLoggedIn = false;
+      this.currentUser = null;
       this.$router.push({ name: 'login' });
     },
     checkAuth() {
+      this.isLoggedIn = AuthService.isLoggedIn();
+      this.currentUser = AuthService.getUser();
       this.initialized = true;
+    },
+    handleLoginSuccess() {
+      this.checkAuth();
     }
   },
   created() {
     this.checkAuth();
+  },
+  watch: {
+    '$route'() {
+      this.checkAuth();
+    }
   }
 };
 </script>

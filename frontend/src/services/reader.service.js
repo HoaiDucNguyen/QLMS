@@ -51,6 +51,46 @@ class ReaderService {
     return (await this.api.get(url)).data;
   }
 
+  async register(data) {
+    try {
+      // Thêm trường vai trò mặc định là đọc giả
+      const registerData = {
+        ...data,
+        vaiTro: 'docgia',
+        trangThai: 'active'
+      };
+
+      // Kiểm tra và xác thực dữ liệu
+      if (!this.validateRegistrationData(registerData)) {
+        throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc");
+      }
+
+      if (!this.validatePhone(registerData.dienThoai)) {
+        throw new Error("Số điện thoại không hợp lệ");
+      }
+
+      // Kiểm tra số điện thoại đã tồn tại
+      const { exists } = await this.checkPhoneExists(registerData.dienThoai);
+      if (exists) {
+        throw new Error("Số điện thoại đã được sử dụng");
+      }
+
+      console.log("Dữ liệu đăng ký:", registerData);
+      return (await this.api.post("/register", registerData)).data;
+    } catch (error) {
+      console.error("Error in register:", error);
+      throw error;
+    }
+  }
+
+  validateRegistrationData(data) {
+    const requiredFields = ['hoLot', 'ten', 'ngaySinh', 'phai', 'dienThoai', 'matKhau'];
+    return requiredFields.every(field => {
+      const value = data[field];
+      return value !== undefined && value !== null && value.toString().trim() !== '';
+    });
+  }
+
   validatePhone(phone) {
     const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
     return phoneRegex.test(phone);

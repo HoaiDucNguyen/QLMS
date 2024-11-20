@@ -56,6 +56,15 @@ class BorrowService {
       `borrow?maDocGia=${maDocGia}&maSach=${maSach}&ngayMuon=${ngayMuon}`
     )).data;
   }
+
+  async getByReader(maDocGia) {
+    try {
+      return (await this.api.get(`reader/${maDocGia}`)).data;
+    } catch (error) {
+      console.error("Error in getByReader:", error);
+      throw error;
+    }
+  }
 }
 
 export default new BorrowService(); 

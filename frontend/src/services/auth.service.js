@@ -18,14 +18,24 @@ class AuthService {
 
       console.log("Login response:", response.data);
 
-      if (!response.data || !response.data.token || !response.data.nhanvien) {
+      if (!response.data || !response.data.token || !response.data.user) {
         throw new Error("Phản hồi không hợp lệ từ server");
       }
 
-      const { token, nhanvien } = response.data;
-      nhanvien.hoTen = nhanvien.hoTenNV;
+      const { token, role, user } = response.data;
       
-      this.setUserData(token, nhanvien);
+      const userData = {
+        maDocGia: user.maDocGia,
+        hoLot: user.hoLot,
+        ten: user.ten,
+        ngaySinh: user.ngaySinh,
+        phai: user.phai,
+        diaChi: user.diaChi,
+        dienThoai: user.dienThoai,
+        role: role
+      };
+
+      this.setUserData(token, userData, role);
       return response.data;
     } catch (error) {
       console.error("Login error:", error);
@@ -33,48 +43,51 @@ class AuthService {
     }
   }
 
-  async changePassword(oldPassword, newPassword) {
-    return (await this.api.post("/change-password", { 
-      oldPassword, 
-      newPassword 
-    })).data;
+  setUserData(token, user, role) {
+    if (!token || !user || !role) {
+      throw new Error("Dữ liệu không hợp lệ");
+    }
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('role', role);
   }
 
   getUser() {
     try {
       const userStr = localStorage.getItem('user');
-      if (!userStr) return null;
-      const user = JSON.parse(userStr);
-      console.log("Retrieved user:", user);
-      return user;
+      return userStr ? JSON.parse(userStr) : null;
     } catch (error) {
       console.error('Error parsing user:', error);
       return null;
     }
   }
 
-  getToken() {
-    return localStorage.getItem('token');
+  getRole() {
+    return localStorage.getItem('role');
   }
 
-  setUserData(token, user) {
-    if (!token || !user) {
-      throw new Error("Dữ liệu không hợp lệ");
-    }
-    console.log("Setting user data:", user);
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+  getToken() {
+    return localStorage.getItem('token');
   }
 
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('role');
   }
 
   isLoggedIn() {
-    const token = this.getToken();
-    const user = this.getUser();
-    return !!(token && user);
+    return !!this.getToken();
+  }
+
+  isNhanVien() {
+    const role = this.getRole();
+    return role === 'nhanvien';
+  }
+
+  isDocGia() {
+    const role = this.getRole();
+    return role === 'docgia';
   }
 }
 

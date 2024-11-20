@@ -1,0 +1,202 @@
+<template>
+  <div class="page">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-history me-2 text-primary"></i>
+            Lịch Sử Mượn Sách
+          </h5>
+          <button class="btn btn-outline-primary btn-sm" @click="loadBorrows">
+            <i class="fas fa-redo"></i> Làm mới
+          </button>
+        </div>
+      </div>
+      
+      <div class="card-body">
+        <div v-if="loading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Đang tải...</span>
+          </div>
+        </div>
+
+        <div v-else-if="error" class="alert alert-danger">
+          {{ error }}
+        </div>
+
+        <div v-else-if="borrows.length === 0" class="text-center py-5">
+          <i class="fas fa-book text-muted mb-3" style="font-size: 2rem;"></i>
+          <p class="text-muted">Bạn chưa có lịch sử mượn sách nào.</p>
+        </div>
+
+        <div v-else class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Tên Sách</th>
+                <th>Ngày Mượn</th>
+                <th>Ngày Hẹn Trả</th>
+                <th>Ngày Trả</th>
+                <th>Trạng Thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="borrow in borrows" :key="borrow._id">
+                <td>{{ getBookName(borrow.maSach) }}</td>
+                <td>{{ formatDate(borrow.ngayMuon) }}</td>
+                <td>{{ formatDate(borrow.ngayHenTra) }}</td>
+                <td>{{ formatDate(borrow.ngayTra) || '—' }}</td>
+                <td>
+                  <span 
+                    class="badge"
+                    :class="getBorrowStatus(borrow).class"
+                  >
+                    {{ getBorrowStatus(borrow).text }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import BorrowService from "@/services/borrow.service";
+import BookService from "@/services/book.service";
+import AuthService from "@/services/auth.service";
+
+export default {
+  name: 'ReaderBorrows',
+  data() {
+    return {
+      borrows: [],
+      books: {},
+      loading: true,
+      error: null
+    }
+  },
+  methods: {
+    async loadBorrows() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const user = AuthService.getUser();
+        if (!user || !user.maDocGia) {
+          throw new Error('Không tìm thấy thông tin đọc giả');
+        }
+        
+        console.log('Loading borrows for reader:', user.maDocGia);
+        this.borrows = await BorrowService.getByReader(user.maDocGia);
+        console.log('Loaded borrows:', this.borrows);
+        
+        if (this.borrows && this.borrows.length > 0) {
+          await this.loadBooks();
+        }
+      } catch (error) {
+        console.error('Error loading borrows:', error);
+        this.error = error.response?.data?.message || 'Có lỗi khi tải lịch sử mượn sách';
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async loadBooks() {
+      const uniqueBookIds = [...new Set(this.borrows.map(b => b.maSach))];
+      for (const maSach of uniqueBookIds) {
+        if (!this.books[maSach]) {
+          try {
+            const book = await BookService.get(maSach);
+            this.books[maSach] = book;
+          } catch (error) {
+            console.error(`Error loading book ${maSach}:`, error);
+            this.books[maSach] = { tenSach: 'Không tìm thấy thông tin sách' };
+          }
+        }
+      }
+    },
+
+    getBookName(maSach) {
+      return this.books[maSach]?.tenSach || 'Đang tải...';
+    },
+
+    formatDate(dateString) {
+      if (!dateString) return null;
+      const date = new Date(dateString);
+      return date.toLocaleDateString('vi-VN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    },
+
+    getBorrowStatus(borrow) {
+      const today = new Date();
+      const henTra = new Date(borrow.ngayHenTra);
+      
+      if (borrow.tinhTrang === "Đã trả") {
+        return {
+          text: 'Đã trả',
+          class: 'bg-success'
+        };
+      }
+      
+      if (today > henTra) {
+        return {
+          text: 'Quá hạn',
+          class: 'bg-danger'
+        };
+      }
+      
+      return {
+        text: borrow.tinhTrang || 'Đang mượn',
+        class: 'bg-primary'
+      };
+    }
+  },
+  created() {
+    this.loadBorrows();
+  }
+}
+</script>
+
+<style scoped>
+.page {
+  padding: 2rem;
+}
+
+.badge {
+  padding: 0.5em 0.8em;
+}
+
+.table > :not(caption) > * > * {
+  padding: 1rem;
+}
+
+.table > tbody > tr {
+  cursor: pointer;
+}
+
+.table > tbody > tr:hover {
+  background-color: rgba(33, 150, 243, 0.05);
+}
+
+.table th {
+  font-weight: 600;
+  background-color: #f8f9fa;
+}
+
+.badge.bg-success {
+  background-color: #198754 !important;
+}
+
+.badge.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.badge.bg-primary {
+  background-color: #0d6efd !important;
+}
+</style> 
