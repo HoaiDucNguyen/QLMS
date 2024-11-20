@@ -1,4 +1,5 @@
 const { ObjectId } = require("mongodb");
+const bcrypt = require('bcryptjs');
 
 class NhanVienService {
   constructor(client) {
@@ -7,11 +8,10 @@ class NhanVienService {
     this.NhanVien.createIndex({ soDienThoai: 1 }, { unique: true });
   }
 
-  extractNhanVienData(payload) {
+  async extractNhanVienData(payload, isCreating = false) {
     const nhanvien = {
       maNV: payload.maNV,
       hoTenNV: payload.hoTenNV,
-      matKhau: payload.matKhau,
       chucVu: payload.chucVu,
       diaChi: payload.diaChi,
       soDienThoai: payload.soDienThoai,
@@ -20,9 +20,6 @@ class NhanVienService {
 
     if (!nhanvien.hoTenNV?.trim()) {
       throw new Error("Họ tên nhân viên không được trống");
-    }
-    if (!nhanvien.matKhau?.trim()) {
-      throw new Error("Mật khẩu không được trống");
     }
     if (!nhanvien.chucVu?.trim()) {
       throw new Error("Chức vụ không được trống");
@@ -37,6 +34,14 @@ class NhanVienService {
       throw new Error("Email không hợp lệ");
     }
 
+    if (isCreating && !payload.matKhau?.trim()) {
+      throw new Error("Mật khẩu không được trống");
+    }
+
+    if (payload.matKhau?.trim()) {
+      nhanvien.matKhau = await bcrypt.hash(payload.matKhau, 10);
+    }
+
     Object.keys(nhanvien).forEach(
       (key) => nhanvien[key] === undefined && delete nhanvien[key]
     );
@@ -45,7 +50,7 @@ class NhanVienService {
 
   async create(payload) {
     try {
-      const nhanvien = this.extractNhanVienData(payload);
+      const nhanvien = await this.extractNhanVienData(payload, true);
       if (!nhanvien.maNV) {
         nhanvien.maNV = await this.generateMaNV();
       }
@@ -77,7 +82,13 @@ class NhanVienService {
   async update(maNV, payload) {
     try {
       const filter = { maNV: maNV };
-      const update = { $set: this.extractNhanVienData(payload) };
+      const nhanvien = await this.extractNhanVienData(payload, false);
+      
+      if (!payload.matKhau?.trim()) {
+        delete nhanvien.matKhau;
+      }
+      
+      const update = { $set: nhanvien };
       const result = await this.NhanVien.findOneAndUpdate(
         filter, 
         update, 

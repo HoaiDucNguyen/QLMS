@@ -15,6 +15,12 @@ class TheoDoiMuonSachService {
         throw new Error("Độc giả không tồn tại");
       }
 
+      // Kiểm tra số lượng sách đang mượn
+      const borrowingCount = await this.countBorrowingBooks(payload.maDocGia);
+      if (borrowingCount >= 3) {
+        throw new Error("Độc giả đã mượn tối đa 3 cuốn sách");
+      }
+
       // Kiểm tra sách tồn tại và còn sách
       const sach = await this.Book.findOne({ maSach: payload.maSach });
       if (!sach) {
@@ -22,6 +28,17 @@ class TheoDoiMuonSachService {
       }
       if (sach.soQuyen <= 0) {
         throw new Error("Sách đã hết");
+      }
+
+      // Kiểm tra xem độc giả có đang mượn cuốn sách này không
+      const existingBorrowingSameBook = await this.TheoDoiMuonSach.findOne({
+        maDocGia: payload.maDocGia,
+        maSach: payload.maSach,
+        tinhTrang: "Đang mượn"
+      });
+
+      if (existingBorrowingSameBook) {
+        throw new Error("Độc giả đang mượn cuốn sách này");
       }
 
       const muonSach = {
@@ -52,13 +69,9 @@ class TheoDoiMuonSachService {
       const result = await this.TheoDoiMuonSach.insertOne(muonSach);
       return { ...muonSach, _id: result.insertedId };
     } catch (error) {
-      if (payload.maSach) {
-        await this.Book.updateOne(
-          { maSach: payload.maSach },
-          { $inc: { soQuyen: 1 } }
-        );
-      }
-      throw error;
+      // Chỉ log lỗi chi tiết ở server
+      console.error("Service error:", error);
+      throw error; // Ném lỗi để controller xử lý
     }
   }
 

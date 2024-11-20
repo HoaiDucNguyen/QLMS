@@ -11,13 +11,22 @@ exports.create = async (req, res, next) => {
       document: document
     });
   } catch (error) {
-    console.log("Lỗi khi thêm phiếu mượn:", error);
-    if (error.message.includes("không tồn tại") || 
-        error.message.includes("đã hết") || 
-        error.message.includes("đã tồn tại")) {
-      return next(new ApiError(400, error.message));
+    console.error("Internal error:", error);
+    
+    if (error.message.includes("đang mượn cuốn sách này")) {
+      return next(new ApiError(400, "Độc giả đang mượn cuốn sách này"));
     }
-    return next(new ApiError(500, "Có lỗi khi thêm phiếu mượn sách"));
+    if (error.message.includes("tối đa 3 cuốn sách")) {
+      return next(new ApiError(400, "Độc giả đã mượn tối đa 3 cuốn sách"));
+    }
+    if (error.message.includes("không tồn tại")) {
+      return next(new ApiError(400, "Thông tin không hợp lệ"));
+    }
+    if (error.message.includes("đã hết")) {
+      return next(new ApiError(400, "Sách đã hết"));
+    }
+    
+    return next(new ApiError(500, "Có lỗi xảy ra khi thêm phiếu mượn sách"));
   }
 };
 
